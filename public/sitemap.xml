@@ -3,4 +3,10 @@
   <url>
     <loc>https://horizonwayfind.ing/</loc>
   </url>
+  <url>
+    <loc>https://horizonwayfind.ing/play</loc>
+  </url>
+  <url>
+    <loc>https://horizonwayfind.ing/map</loc>
+  </url>
 </urlset>
