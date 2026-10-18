@@ -373,10 +373,10 @@ function statsLabel(stats) {
 async function viewAtlas(round) {
   const token = ++viewToken
   showStats(round.name)
-  const title = LOCATIONS.find(location => location.id === round.location)?.name || "This"
   sphere.value.setControls({ pan: true, zoom: true })
   const best = bestGuesses.value[round.name]
   const unfound = !found.value.has(round.name)
+  const title = unfound && !devMode.value ? "Unknown" : LOCATIONS.find(location => location.id === round.location)?.name || "This"
   if (presentedAtlas === round.name) {
     viewing.value = { title, best, unfound, loading: false }
     return
