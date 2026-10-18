@@ -908,7 +908,7 @@ async function showResult(entry, animate = false) {
   await nextTick()
   const points = [entry.guess, entry.answer]
   const room = resultCard.value?.insets() || {}
-  const start = { x: entry.guess.x, y: entry.guess.y, zoom: 0.35 }
+  const start = { x: entry.guess.x, y: entry.guess.y, zoom: 14 }
   if (!animate) {
     resultMarkers.push(bigmap.value.addMarker(answerMarker(), entry.answer.x, entry.answer.y))
     bigmap.value.fit(points, Object.assign({ start }, room))

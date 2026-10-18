@@ -39,6 +39,7 @@ const PREFETCH_NEIGHBOURS = 16
 const CLICK_DISTANCE = 6
 const FIT_TOP = 48
 const FIT_SIDE = 40
+const CLOSEST_FIT = 3
 const FLIGHT_MS = 900
 // HFW MapResource (group 72333) WidthInWorldCoords
 const MAP_WIDTH_METRES = 5760
@@ -1125,7 +1126,7 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
     const sides = Math.max(canvas.clientWidth - left - side * 2, canvas.clientWidth * 0.3) / Math.max(canvas.clientWidth, 1)
     const aspect = canvas.width * sides / (canvas.height * usable)
     const span = Math.max(box.maxY - box.minY, (box.maxX - box.minX) / aspect) * margin / usable
-    const to = { x: (box.minX + box.maxX) / 2 - span * left / height / 2, y: (box.minY + box.maxY) / 2 - span * (bottom - top) / height / 2, distance: Math.max(span / 2 / Math.tan(FOV / 2), limits().min * 40) }
+    const to = { x: (box.minX + box.maxX) / 2 - span * left / height / 2, y: (box.minY + box.maxY) / 2 - span * (bottom - top) / height / 2, distance: Math.max(span / 2 / Math.tan(FOV / 2), limits().min * CLOSEST_FIT) }
     if (camera.z !== null) {
       anchorPivot(false)
     }
@@ -1137,7 +1138,7 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
       camera.y = to.y
       camera.distance = camera.target = to.distance
     } else {
-      const from = start ? { x: start.x, y: start.y, distance: to.distance * start.zoom } : { x: camera.x, y: camera.y, distance: camera.distance }
+      const from = start ? { x: start.x, y: start.y, distance: limits().min * start.zoom } : { x: camera.x, y: camera.y, distance: camera.distance }
       flight = { from, to, start: performance.now() + delay, duration }
     }
     needsDraw = true
