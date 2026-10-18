@@ -4,3 +4,4 @@ tools/
 import/captures/
 import/encoder/target/
 import/latest.json
+.wrangler/
