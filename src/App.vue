@@ -1321,7 +1321,7 @@ onBeforeUnmount(() => {
       <MapView ref="minimap" pickable pois scale modes :faded="swapFading" @pick="placeGuess" />
     </Teleport>
   </GuessPanel>
-  <div class="bigmap" :class="{ shown: showsMap, waiting: (atlas && !atlasReady) || mapWaiting, atlas: atlasMap }">
+  <div class="bigmap" :class="{ shown: showsMap, covered: intro, waiting: (atlas && !atlasReady) || mapWaiting, atlas: atlasMap }">
     <MapView ref="bigmap" pois scale modes />
     <LoadingEmblem :key="loadingKey" class="map-loading" />
   </div>
@@ -1392,6 +1392,11 @@ onBeforeUnmount(() => {
   opacity: 1;
   visibility: visible;
   transition: opacity 0.45s ease;
+}
+
+/* the .backdrop fade in SlideBackdrop.vue */
+.bigmap.covered:not(.shown) {
+  transition: opacity 0s linear 0.6s, visibility 0s linear 0.6s;
 }
 
 .bigmap.atlas :deep(.marker:not(.atlas)), .bigmap.atlas :deep(.map-line) {
