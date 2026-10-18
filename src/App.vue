@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue"
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch, watchEffect } from "vue"
 import AtlasScreen from "./components/AtlasScreen.vue"
 import LoadingEmblem from "./components/LoadingEmblem.vue"
 import ChallengeScreen from "./components/ChallengeScreen.vue"
@@ -51,6 +51,8 @@ const REVEAL_COUNT_DELAY_MS = 1000
 const REVEAL_COUNT_MS = 1600
 const REVEAL_DOCK_MS = 3000
 const SAVED_GAME = "savedGame"
+// the <title> in index.html
+const HOME_TITLE = "Horizon Wayfinder · A Photosphere Guessing Game"
 const GAME_SUFFIXES = { both: "", hzd: "ZeroDawn", hfw: "ForbiddenWest" }
 const GAME_TITLES = { hzd: "Horizon Zero Dawn Remastered", hfw: "Horizon Forbidden West" }
 const COMBINATIONS = ["easy", "normal", "hard"].flatMap(modeName => Object.keys(GAME_SUFFIXES).map(which => [modeName, which]))
@@ -1223,6 +1225,32 @@ onMounted(async () => {
 })
 
 watch(swapView, swapped => minimap.value?.setBottomInset(swapped ? 0 : MINIMAP_TUCK))
+
+const pageTitle = computed(() => {
+  if (viewing.value?.title) {
+    return `${viewing.value.title} Photosphere`
+  }
+  if (phase.value === "summary") {
+    return "Results"
+  }
+  if (!isMenu.value) {
+    return `Round ${status.index} of ${status.count}`
+  }
+  if (atlas.value) {
+    return "World Map"
+  }
+  if (challenge.value) {
+    return "Challenge"
+  }
+  if (setup.value) {
+    return "Game Setup"
+  }
+  return choosing.value ? "New Game" : null
+})
+
+watchEffect(() => {
+  document.title = pageTitle.value ? `${pageTitle.value} · Horizon Wayfinder` : HOME_TITLE
+})
 
 window.toggleSecretDevMode = () => {
   devMode.value = !devMode.value
