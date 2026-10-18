@@ -63,7 +63,7 @@ watch(() => props.hidden, () => open.value = false)
 }
 
 .guess:hover, .guess.open {
-  width: min(1280px, calc(100vw - var(--edge) * 2), calc((100vh - var(--edge) * 2 - var(--gap) - var(--actions) + var(--tuck)) * var(--shape)));
+  width: min(100vh * 1280 / 1440, calc(100vw - var(--edge) * 2), calc((100vh - var(--edge) * 2 - var(--gap) - var(--actions) + var(--tuck)) * var(--shape)));
   transition-delay: 0s;
 }
 
