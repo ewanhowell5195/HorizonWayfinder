@@ -1,5 +1,35 @@
 <script setup>
+import { onBeforeUnmount, onMounted, ref } from "vue"
+import { TRIBES } from "../lib/rules.js"
+import { loadScores } from "../lib/stats.js"
+import ArrowIcon from "./ArrowIcon.vue"
+
 defineProps({ count: Number })
+const emit = defineEmits(["play"])
+// the play area masks in public/map at the fog edge's midpoint, both games together
+const MAP_KM2 = 45
+const TRIBE_COUNT = TRIBES.filter(tribe => tribe.tribe && tribe.tribe !== "neutral").length
+const vista = ref(null)
+const guesses = ref(null)
+let observer = null
+
+function loadNumbers() {
+  loadScores().then(scores => {
+    guesses.value = Object.values(scores).reduce((sum, entry) => sum + entry.count, 0)
+  })
+}
+
+onMounted(() => {
+  observer = new IntersectionObserver(entries => {
+    if (entries.some(entry => entry.isIntersecting)) {
+      observer.disconnect()
+      loadNumbers()
+    }
+  })
+  observer.observe(vista.value)
+})
+
+onBeforeUnmount(() => observer?.disconnect())
 
 const SHOTS = [
   { image: "round", title: "Look around", text: "Every photosphere is a full 360 degree view taken in the game. Drag to turn and scroll to zoom in on the details: a landmark on the horizon, the buildings, the plants underfoot.", alt: "A Horizon Wayfinder round, looking around a photosphere of a forest" },
@@ -22,6 +52,23 @@ const SHOTS = [
         <em>{{ String(n + 1).padStart(2, "0") }}</em>
         <h3>{{ shot.title }}</h3>
         <p>{{ shot.text }}</p>
+      </div>
+    </section>
+    <section ref="vista" class="vista">
+      <img src="/backgrounds/2561580_20241111232818.avif" alt="Sunlight through a birch forest in Horizon Forbidden West" width="1920" height="1080" loading="lazy" decoding="async">
+      <div class="vista-content">
+        <p class="eyebrow">Your turn</p>
+        <h2 class="about-title"><span>Are you ready</span><span class="outline">to play?</span></h2>
+        <p class="lede">Two games, one map. See how well you really know the world.</p>
+        <div class="stat-row numbers">
+          <div class="stat-block"><small class="label">Photospheres</small><strong>{{ count ? count.toLocaleString("en") : "-" }}</strong></div>
+          <div class="stat-block"><small class="label">Map area</small><strong>{{ MAP_KM2 }} <span class="unit">km²</span></strong></div>
+          <div class="stat-block"><small class="label">Tribes</small><strong>{{ TRIBE_COUNT }}</strong></div>
+          <div class="stat-block"><small class="label">Guesses made</small><strong>{{ guesses === null ? "-" : guesses.toLocaleString("en") }}</strong></div>
+        </div>
+        <div class="button-row">
+          <button class="action" type="button" @click="emit('play')">Play<ArrowIcon /></button>
+        </div>
       </div>
     </section>
     <section class="points">
@@ -63,7 +110,7 @@ const SHOTS = [
   margin: 0 -56px -34px;
   --fade-length: clamp(96px, 16vh, 180px);
   padding: calc(var(--fade-length) + clamp(64px, 10vh, 120px)) 56px 0;
-  background: linear-gradient(rgba(7, 9, 12, 0), rgba(7, 9, 12, 0.08) calc(var(--fade-length) * 0.15), rgba(7, 9, 12, 0.28) calc(var(--fade-length) * 0.3), rgba(7, 9, 12, 0.55) calc(var(--fade-length) * 0.5), rgba(7, 9, 12, 0.8) calc(var(--fade-length) * 0.7), rgba(7, 9, 12, 0.95) calc(var(--fade-length) * 0.87), var(--bg) var(--fade-length));
+  background: linear-gradient(rgba(7, 9, 12, 0.000) calc(var(--fade-length) * 0.000), rgba(7, 9, 12, 0.020) calc(var(--fade-length) * 0.083), rgba(7, 9, 12, 0.074) calc(var(--fade-length) * 0.167), rgba(7, 9, 12, 0.156) calc(var(--fade-length) * 0.250), rgba(7, 9, 12, 0.259) calc(var(--fade-length) * 0.333), rgba(7, 9, 12, 0.376) calc(var(--fade-length) * 0.417), rgba(7, 9, 12, 0.500) calc(var(--fade-length) * 0.500), rgba(7, 9, 12, 0.624) calc(var(--fade-length) * 0.583), rgba(7, 9, 12, 0.741) calc(var(--fade-length) * 0.667), rgba(7, 9, 12, 0.844) calc(var(--fade-length) * 0.750), rgba(7, 9, 12, 0.926) calc(var(--fade-length) * 0.833), rgba(7, 9, 12, 0.980) calc(var(--fade-length) * 0.917), rgba(7, 9, 12, 1.000) calc(var(--fade-length) * 1.000));
 }
 
 .intro, .shot, .points, .made, .site-footer {
@@ -145,6 +192,65 @@ h3 {
   color: rgba(232, 234, 237, 0.8);
 }
 
+.vista {
+  position: relative;
+  display: grid;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0 -56px;
+  padding: 0 56px;
+  clip-path: inset(0);
+  mask-image: url(/about/edge-top.webp), linear-gradient(#000, #000), url(/about/edge-bottom.webp);
+  mask-size: 500px 280px, 100% calc(100% - 558px), 500px 280px;
+  mask-position: top left, center, bottom left;
+  mask-repeat: repeat-x, no-repeat, repeat-x;
+}
+
+.vista img {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vista::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(7, 9, 12, 0.8), rgba(7, 9, 12, 0) 62%);
+}
+
+.vista-content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: start;
+  gap: 28px;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.vista-content .eyebrow, .vista-content .about-title, .vista-content .lede {
+  margin: 0;
+}
+
+.numbers {
+  flex-wrap: wrap;
+  row-gap: 18px;
+}
+
+.unit {
+  font-family: "Oita Norm", sans-serif;
+  font-size: 0.6em;
+  letter-spacing: 0.02em;
+}
+
+.vista .button-row {
+  width: fit-content;
+}
+
 .points {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -219,6 +325,12 @@ h3 {
 
   .shot, .shot.flipped, .points {
     grid-template-columns: 1fr;
+  }
+
+  .vista {
+    min-height: 80vh;
+    margin: 0 -20px;
+    padding: 0 20px;
   }
 
   .shot.flipped img {

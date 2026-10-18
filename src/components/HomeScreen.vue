@@ -44,7 +44,7 @@ function play() {
       <div id="home-credit"></div>
     </template>
     <template #after>
-      <HomeAbout :count="count" />
+      <HomeAbout :count="count" @play="play" />
     </template>
   </MenuScreen>
 </template>
