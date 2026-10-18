@@ -5,19 +5,19 @@ export const PAGES = {
   play: {
     name: "New Game",
     description: "Pick Zero Dawn, Forbidden West or both, choose your rules, then guess where each photosphere was taken.",
-    image: "social-play.jpg",
+    image: "social/play.jpg",
     buttons: [["Play", "play"], ["Open the map", "map"]]
   },
   map: {
     name: "World Map",
     description: "Explore the maps of Horizon Zero Dawn and Horizon Forbidden West, and every photosphere you have found.",
-    image: "social-map.jpg",
+    image: "social/map.jpg",
     buttons: [["Open the map", "map"], ["Play", "play"]]
   },
   challenge: {
     name: "Challenge",
     description: "Play the same photospheres and try to beat their score.",
-    image: "social-challenge.jpg",
+    image: "social/challenge.jpg",
     buttons: [],
     linked: false
   }
