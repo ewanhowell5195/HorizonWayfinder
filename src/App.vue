@@ -1200,7 +1200,7 @@ onMounted(async () => {
     } else if (devPick) {
       mapTab.value = "dev"
     }
-    replaceScreen(["games", "atlas"].includes(path) ? path : ["setup", "game"].includes(path) ? "setup" : "home", ["games", "atlas"].includes(path) ? screenUrl(path) + (devPick ? `?dev=${encodeURIComponent(devPick)}` : "") + location.hash : undefined)
+    replaceScreen(["games", "atlas"].includes(path) ? path : ["setup", "game", "challenge"].includes(path) ? "games" : "home", ["games", "atlas"].includes(path) ? screenUrl(path) + (devPick ? `?dev=${encodeURIComponent(devPick)}` : "") + location.hash : undefined)
   }
   setup.value = history.state.screen === "setup"
   choosing.value = history.state.screen === "games"
