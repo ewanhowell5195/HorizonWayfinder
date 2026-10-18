@@ -1,11 +1,12 @@
 <script setup>
 import { computed } from "vue"
 import ArrowIcon from "./ArrowIcon.vue"
+import HomeAbout from "./HomeAbout.vue"
 import MenuScreen from "./MenuScreen.vue"
 import SlapTitle from "./SlapTitle.vue"
 
 const props = defineProps({ visible: Boolean, count: Number, found: Number, ready: Boolean, best: Number, last: Number, average: Number })
-const emit = defineEmits(["play", "atlas"])
+const emit = defineEmits(["play", "atlas", "fold"])
 
 const countLabel = computed(() => props.count ? `${props.count} locations` : "")
 const bestLabel = computed(() => props.best ? props.best.toLocaleString() : "None yet")
@@ -18,7 +19,7 @@ function play() {
 </script>
 
 <template>
-  <MenuScreen class="home" :visible="visible" label="Photosphere guessing game" :width="640">
+  <MenuScreen class="home" :visible="visible" label="Photosphere guessing game" :width="640" @fold="bottom => emit('fold', bottom)">
     <template #top>
       <span class="count rise">{{ countLabel }}</span>
     </template>
@@ -40,6 +41,10 @@ function play() {
         <div class="stat-block"><small class="label">Last game</small><strong>{{ lastLabel }}</strong></div>
         <div class="stat-block"><small class="label">Average</small><strong>{{ averageLabel }}</strong></div>
       </footer>
+      <div id="home-credit"></div>
+    </template>
+    <template #after>
+      <HomeAbout :count="count" />
     </template>
   </MenuScreen>
 </template>
@@ -101,6 +106,10 @@ function play() {
   font-size: 13px;
   line-height: 1.45;
   color: var(--muted);
+}
+
+#home-credit {
+  display: contents;
 }
 
 .home-bottom {

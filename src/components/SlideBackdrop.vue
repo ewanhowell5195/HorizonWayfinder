@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { SLIDE_MS, createBackdrop } from "../lib/backdrop.js"
 
-const props = defineProps({ active: Boolean, timer: Boolean, caption: { type: Boolean, default: true } })
+const props = defineProps({ active: Boolean, timer: Boolean, caption: { type: Boolean, default: true }, dock: Boolean })
 const canvas = ref(null)
 const game = ref("")
 const label = ref("Screenshot")
@@ -54,11 +54,13 @@ defineExpose({
 <template>
   <div class="backdrop" :class="{ shown: active }">
     <canvas ref="canvas"></canvas>
-    <div class="credit" :class="{ hidden: !caption }">
-      <small>{{ label }}</small>
-      <span>{{ game }}</span>
-      <div :key="slide" class="timer" :class="{ running: cycling, hidden: !timer }" :style="timerStyle"></div>
-    </div>
+    <Teleport to="#home-credit" defer :disabled="!dock">
+      <div class="credit" :class="{ hidden: !caption, docked: dock }">
+        <small>{{ label }}</small>
+        <span>{{ game }}</span>
+        <div :key="slide" class="timer" :class="{ running: cycling, hidden: !timer }" :style="timerStyle"></div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -97,6 +99,11 @@ canvas {
   gap: 6px;
   text-align: right;
   transition: opacity 0.4s ease;
+}
+
+/* the .screen padding in styles.css */
+.credit.docked {
+  bottom: calc(34px - clamp(20px, 3.6vh, 34px));
 }
 
 .credit.hidden {

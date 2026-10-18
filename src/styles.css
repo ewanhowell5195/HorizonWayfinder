@@ -67,7 +67,7 @@ img {
   -webkit-user-drag: none;
 }
 
-button {
+button, a.button {
   user-select: none;
   font: inherit;
   font-weight: 600;
@@ -81,8 +81,12 @@ button {
   text-transform: uppercase;
 }
 
-button:hover:not(:disabled) {
+button:hover:not(:disabled), a.button:hover {
   filter: brightness(1.1);
+}
+
+a.button {
+  text-decoration: none;
 }
 
 button:disabled {
@@ -90,7 +94,7 @@ button:disabled {
   opacity: 0.5;
 }
 
-button.secondary {
+button.secondary, a.button.secondary {
   color: var(--text);
   background: var(--panel);
   border: 1px solid var(--border);
@@ -145,6 +149,10 @@ button.secondary {
 .button-row > .secondary {
   border: 0;
   background: rgba(255, 255, 255, 0.1);
+}
+
+.button-row > a.button.secondary {
+  border: 0;
 }
 
 .button-row > .secondary:hover:not(:disabled) {
@@ -342,7 +350,8 @@ a.mark[href]:hover {
   display: grid;
   grid-template-rows: auto 1fr auto;
   row-gap: 24px;
-  padding: clamp(20px, 3.6vh, 34px) 56px;
+  --screen-top: clamp(20px, 3.6vh, 34px);
+  padding: var(--screen-top) 56px;
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-width: thin;
@@ -351,6 +360,27 @@ a.mark[href]:hover {
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.5s ease, visibility 0s linear 0.5s;
+}
+
+.screen-fold {
+  display: contents;
+}
+
+.screen.scrolls {
+  display: block;
+  scrollbar-width: none;
+  mask-image: none;
+}
+
+.screen.scrolls > .screen-fold {
+  position: relative;
+  margin: 0 -56px;
+  padding: 0 56px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  row-gap: 24px;
+  min-height: 100%;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, calc(1 - var(--fade, 0))) calc(var(--scrolled, 0px) + 56px - var(--screen-top)), #000 calc(var(--scrolled, 0px) + 96px - var(--screen-top)));
 }
 
 .screen.visible {
@@ -449,7 +479,13 @@ a.mark[href]:hover {
 
 @media (max-width: 760px) {
   .screen {
-    padding: 22px 20px 24px;
+    --screen-top: 22px;
+    padding: var(--screen-top) 20px 24px;
+  }
+
+  .screen.scrolls > .screen-fold {
+    margin: 0 -20px;
+    padding: 0 20px;
   }
 
   .screen-main {
