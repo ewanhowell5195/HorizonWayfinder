@@ -6,6 +6,7 @@ const FOG_COLOR = [7 / 255, 9 / 255, 12 / 255]
 const FOG_OPACITY = 0.9
 const PORTRAIT_FOG = 0.45
 const PORTRAIT_FOG_MARGIN = 32
+const PORTRAIT_FOG_REACH = 0.15
 const FOG_MARGIN = 160
 const FOG_EASE = 6
 const DARK_MS = 250
@@ -59,7 +60,7 @@ const fragmentSource = `#version 300 es
     vec2 screen = uResolution / uPixelRatio;
     bool portrait = uFog.w > 0.5;
     float across = portrait ? css.x / screen.x : css.y / screen.y;
-    float wave = (sin(across * 5.1 + uFog.z) * 0.6 + sin(across * 11.7 + uFog.z * 2.0) * 0.4) * (portrait ? 28.0 : 46.0);
+    float wave = (sin(across * 5.1 + uFog.z) * 0.6 + sin(across * 11.7 + uFog.z * 2.0) * 0.4) * (portrait ? 8.0 : 46.0);
     float along = portrait ? screen.y - css.y : css.x;
     float mask = clamp(0.5 + (along - uFog.x - wave) / uFog.y, 0.0, 1.0);
     float edge = (clamp((mask - 0.5) / 0.3, 0.0, 1.0) + clamp((mask - 0.2) / 0.3, 0.0, 1.0)) * 0.5;
@@ -252,7 +253,7 @@ export async function createBackdrop(canvas, { onSlide, onFog, fogTop, fogRight 
     let target
     if (portrait) {
       const top = fogTop?.()
-      target = Math.max(screenHeight * PORTRAIT_FOG, top === undefined || top === null ? 0 : screenHeight - top + PORTRAIT_FOG_MARGIN) + band * 0.3
+      target = Math.max(screenHeight * PORTRAIT_FOG + band * 0.3, top === undefined || top === null ? 0 : screenHeight - top + PORTRAIT_FOG_MARGIN + band * PORTRAIT_FOG_REACH)
     } else {
       const right = fogRight?.()
       target = right === undefined || right === null ? Math.min(Math.max(screenWidth * 0.52, 940), screenWidth * 0.72) : Math.max(screenWidth / 2, right + FOG_MARGIN)
