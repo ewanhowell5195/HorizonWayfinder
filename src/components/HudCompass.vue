@@ -2,7 +2,7 @@
 import { onMounted, ref, watch } from "vue"
 import { createCompass } from "../lib/compass.js"
 
-const props = defineProps({ heading: Number, boxed: Boolean, faded: Boolean })
+const props = defineProps({ heading: Number, boxed: Boolean, faded: Boolean, placement: String })
 
 const host = ref(null)
 const compass = createCompass()
@@ -16,7 +16,7 @@ watch(() => props.heading, value => compass.setHeading(value))
 </script>
 
 <template>
-  <div ref="host" class="hud-compass" :class="{ boxed, faded }"></div>
+  <div ref="host" class="hud-compass" :class="[placement, { boxed, faded }]"></div>
 </template>
 
 <style scoped>
@@ -42,15 +42,19 @@ watch(() => props.heading, value => compass.setHeading(value))
   width: calc(630 * var(--u));
 }
 
-@media (max-width: 1100px), (max-aspect-ratio: 4/3) {
-  .hud-compass {
-    top: 76px;
-    width: min(630 * var(--u), 100%);
-  }
+.hud-compass.right:not(.boxed) {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.hud-compass.below:not(.boxed) {
+  top: 76px;
+  width: min(630 * var(--u), 100%);
 }
 
 @media (hover: none), (max-width: 640px) {
-  .hud-compass {
+  .hud-compass.below:not(.boxed) {
     top: 64px;
   }
 }
