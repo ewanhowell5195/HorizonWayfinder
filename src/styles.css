@@ -158,7 +158,8 @@ button.secondary {
 }
 
 .button-row.bright > .secondary:hover:not(:disabled) {
-  background: #fff;
+  background: var(--accent);
+  filter: none;
 }
 
 @media (max-width: 560px) {
