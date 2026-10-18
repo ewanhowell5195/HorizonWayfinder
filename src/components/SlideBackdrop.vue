@@ -54,7 +54,6 @@ defineExpose({
 <template>
   <div class="backdrop" :class="{ shown: active }">
     <canvas ref="canvas"></canvas>
-    <div class="shade"></div>
     <div class="credit" :class="{ hidden: !caption }">
       <small>{{ label }}</small>
       <span>{{ game }}</span>
@@ -87,12 +86,6 @@ canvas {
   display: block;
   width: 100%;
   height: 100%;
-}
-
-.shade {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(7, 9, 12, 0.9), rgba(7, 9, 12, 0) 34%), linear-gradient(to bottom, rgba(7, 9, 12, 0.6), rgba(7, 9, 12, 0) 20%);
 }
 
 .credit {
