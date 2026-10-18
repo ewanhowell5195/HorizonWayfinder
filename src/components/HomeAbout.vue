@@ -125,21 +125,7 @@ const SHOTS = [
 
 .about-title {
   margin: 0 0 24px;
-  font-family: var(--font-display);
-  font-weight: 400;
   font-size: clamp(40px, 6vw, 84px);
-  line-height: 0.9;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-
-.about-title span {
-  display: block;
-}
-
-.about-title .outline {
-  color: transparent;
-  -webkit-text-stroke: 1.5px var(--accent);
 }
 
 .intro .lede {

@@ -101,9 +101,8 @@ canvas {
   transition: opacity 0.4s ease;
 }
 
-/* the .screen padding in styles.css */
 .credit.docked {
-  bottom: calc(34px - clamp(20px, 3.6vh, 34px));
+  bottom: calc(34px - var(--screen-top));
 }
 
 .credit.hidden {

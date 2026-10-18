@@ -94,7 +94,7 @@ button:disabled {
   opacity: 0.5;
 }
 
-button.secondary, a.button.secondary {
+button.secondary, .button.secondary {
   color: var(--text);
   background: var(--panel);
   border: 1px solid var(--border);
@@ -149,10 +149,6 @@ button.secondary, a.button.secondary {
 .button-row > .secondary {
   border: 0;
   background: rgba(255, 255, 255, 0.1);
-}
-
-.button-row > a.button.secondary {
-  border: 0;
 }
 
 .button-row > .secondary:hover:not(:disabled) {
@@ -411,17 +407,20 @@ a.mark[href]:hover {
   transition: max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.screen-title {
-  margin: clamp(10px, 2vh, 22px) 0 clamp(18px, 3.4vh, 36px);
+.screen-title, .about-title {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(48px, min(7.6vw, 10vh), 116px);
   line-height: 0.88;
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
 
-.screen-title span {
+.screen-title {
+  margin: clamp(10px, 2vh, 22px) 0 clamp(18px, 3.4vh, 36px);
+  font-size: clamp(48px, min(7.6vw, 10vh), 116px);
+}
+
+.screen-title span, .about-title span {
   display: block;
 }
 
@@ -433,7 +432,7 @@ a.mark[href]:hover {
   margin-left: 0.25em;
 }
 
-.screen-title .outline {
+.screen-title .outline, .about-title .outline {
   white-space: nowrap;
   color: transparent;
   -webkit-text-stroke: 1.5px var(--accent);
@@ -751,7 +750,6 @@ a.mark[href]:hover {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #4fc3f7;
   border: 3px solid #fff;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 2px 4px rgba(0, 0, 0, 0.6);
 }
