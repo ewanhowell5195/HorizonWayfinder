@@ -179,15 +179,16 @@ h3 {
 }
 
 .vista {
+  --edge: 280px;
   position: relative;
   display: grid;
   align-items: center;
   min-height: 100vh;
   margin: 0 -56px;
-  padding: 0 56px;
+  padding: calc(var(--edge) * 0.7) 56px;
   clip-path: inset(0);
   mask-image: url(/about/edge-top.webp), linear-gradient(#000, #000), url(/about/edge-bottom.webp);
-  mask-size: 500px 280px, 100% calc(100% - 558px), 500px 280px;
+  mask-size: calc(var(--edge) * 500 / 280) var(--edge), 100% calc(100% - var(--edge) * 2 + 2px), calc(var(--edge) * 500 / 280) var(--edge);
   mask-position: top left, center, bottom left;
   mask-repeat: repeat-x, no-repeat, repeat-x;
 }
@@ -314,9 +315,37 @@ h3 {
   }
 
   .vista {
-    min-height: 80vh;
+    --edge: 168px;
+    min-height: 0;
     margin: 0 -20px;
-    padding: 0 20px;
+    padding: calc(var(--edge) * 0.7) 20px;
+  }
+
+  .vista::after {
+    background: rgba(7, 9, 12, 0.55);
+  }
+
+  .made .button-row {
+    --step: 14px;
+    --gap: 8px;
+    grid-auto-flow: row;
+    row-gap: 0;
+    width: 100%;
+  }
+
+  .made .button-row > :first-child {
+    padding-bottom: calc(var(--pad-y) + var(--step));
+    clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, calc(100% - var(--step)) calc(100% - var(--step)), var(--step) calc(100% - var(--step)), 0 calc(100% - var(--step) * 2));
+  }
+
+  .made .button-row > :last-child {
+    margin-top: calc(var(--step) * -2);
+    padding-top: calc(var(--pad-y) + var(--step) + var(--gap));
+    clip-path: polygon(0 calc(var(--gap) * 1.4142), calc(var(--step) - var(--gap) * 0.4142) calc(var(--step) + var(--gap)), calc(100% - var(--step) - var(--gap) * 0.4142) calc(var(--step) + var(--gap)), 100% calc(var(--step) * 2 + var(--gap) * 1.4142), 100% 100%, 16px 100%, 0 calc(100% - 16px));
+  }
+
+  .made .button-row > *::before {
+    display: none;
   }
 
   .shot.flipped img {
