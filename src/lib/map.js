@@ -48,12 +48,19 @@ const GAME_POI_ZOOM = { "campfire": 1.4, "machine-site": 1.4, "hunting-ground": 
 const POI_MARGIN = 40
 const POI_HOVER_RADIUS = 24
 const POI_SPACING = 44
+const POI_VIEW_ASPECT = 16 / 9
+const POI_SMALL_SCREEN = 600
+const POI_SMALL_SCALE = 0.66
 const POI_OCCLUSION_RADIUS = 30
 const POI_OCCLUSION_HEIGHT = 1080
 const POI_OCCLUSION_SAMPLES = 8
 const OCCLUSION_STEPS = 32
 const OCCLUSION_END = 0.97
 const POI_SPREAD_PASSES = 4
+const POI_MIN_SCALE = 0.5
+const POI_OCCLUSION_FALLOFF = 4
+const POI_REACH = 1.4
+const POI_MIN_REACH_METRES = 1500
 // covers the 0.3 s .map-poi opacity transition in styles.css
 const POI_FADE_MS = 350
 const SCALE_TARGET = 90
@@ -1144,8 +1151,8 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
     needsDraw = true
   }
 
-  function position(item, point) {
-    const transform = `translate(${point.x.toFixed(1)}px, ${point.y.toFixed(1)}px)`
+  function position(item, point, size = 1) {
+    const transform = `translate(${point.x.toFixed(1)}px, ${point.y.toFixed(1)}px)${size < 1 ? ` scale(${size.toFixed(3)})` : ""}`
     item.screen = point
     if (item.transform !== transform) {
       item.transform = transform
@@ -1164,12 +1171,12 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
     return false
   }
 
-  function hiddenByTerrain(x, y, z) {
+  function hiddenByTerrain(x, y, z, size) {
     const screen = project(x, y, z)
     if (screen.x < -POI_MARGIN || screen.y < -POI_MARGIN || screen.x > viewSize.width + POI_MARGIN || screen.y > viewSize.height + POI_MARGIN) {
       return false
     }
-    const radius = POI_OCCLUSION_RADIUS * Math.min(viewSize.height / POI_OCCLUSION_HEIGHT, 1) * Math.hypot(eye[0] - x, eye[1] - y, eye[2] - z) * 2 * Math.tan(FOV / 2) / Math.max(viewSize.height, 1)
+    const radius = POI_OCCLUSION_RADIUS * size ** POI_OCCLUSION_FALLOFF * Math.min(viewSize.height / POI_OCCLUSION_HEIGHT, 1) * Math.hypot(eye[0] - x, eye[1] - y, eye[2] - z) * 2 * Math.tan(FOV / 2) / Math.max(viewSize.height, 1)
     const st = Math.sin(camera.tilt), ct = Math.cos(camera.tilt)
     const sh = Math.sin(camera.heading), ch = Math.cos(camera.heading)
     for (let k = 0; k <= POI_OCCLUSION_SAMPLES; k++) {
@@ -1182,7 +1189,26 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
     return true
   }
 
-  function spread(placed) {
+  function showPoi(poi, shown, now) {
+    if (shown !== poi.shown) {
+      poi.shown = shown
+      poi.hiddenAt = now
+      poi.element.classList.toggle("shown", shown)
+    }
+  }
+
+  function hideCovered(placed) {
+    const front = []
+    for (const item of placed.filter(entry => entry.shown).sort((a, b) => a.depth - b.depth)) {
+      if (front.some(other => Math.hypot(other.point.x - item.point.x, other.point.y - item.point.y) < POI_SPACING * (other.size + item.size) / 2)) {
+        item.shown = false
+      } else {
+        front.push(item)
+      }
+    }
+  }
+
+  function spread(placed, spacing) {
     for (let pass = 0; pass < POI_SPREAD_PASSES; pass++) {
       for (let a = 0; a < placed.length; a++) {
         const first = placed[a].point
@@ -1190,7 +1216,7 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
           const second = placed[b].point
           let dx = second.x - first.x, dy = second.y - first.y
           const away = Math.hypot(dx, dy)
-          if (away >= POI_SPACING) {
+          if (away >= spacing) {
             continue
           }
           if (away < 0.01) {
@@ -1200,7 +1226,7 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
             dx /= away
             dy /= away
           }
-          const push = (POI_SPACING - away) / 2
+          const push = (spacing - away) / 2
           first.x -= dx * push
           first.y -= dy * push
           second.x += dx * push
@@ -1244,31 +1270,32 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
     const origin = project(camera.x, camera.y, 0)
     const across = project(camera.x + 1, camera.y, 0)
     const unitPixels = Math.hypot(across.x - origin.x, across.y - origin.y)
-    const zoomPerPixel = MAP_WIDTH_METRES / (UNIT_METRES * Math.max(viewSize.width, 1))
+    const screenScale = viewSize.width <= POI_SMALL_SCREEN ? POI_SMALL_SCALE : 1
+    const zoomPerPixel = MAP_WIDTH_METRES * screenScale / (UNIT_METRES * Math.max(Math.sqrt(viewSize.width * viewSize.height * POI_VIEW_ASPECT), 1))
     const gameZoom = zoomPerPixel * unitPixels
     const focal = viewSize.height / (2 * Math.tan(FOV / 2))
     const now = performance.now()
     const placed = []
     for (const poi of pointsOfInterest) {
       let z = null
+      let depth = 0
+      let size = 1
       const visibleZoom = poiZoom[poi.type]
       let shown = gameZoom >= visibleZoom
       if (threeD) {
-        const reach = zoomPerPixel * focal / visibleZoom
+        const zoomReach = zoomPerPixel * focal / visibleZoom
+        const reach = zoomReach + (Math.min(zoomReach, Math.max(camera.distance * POI_REACH, POI_MIN_REACH_METRES / UNIT_METRES)) - zoomReach) * camera.tilt / MAX_TILT
         const away = Math.hypot(eye[0] - poi.x, eye[1] - poi.y)
         z = away <= reach ? heightAt(poi.x, poi.y) : null
-        shown = z !== null && Math.hypot(away, eye[2] - z) <= reach
+        depth = z === null ? Infinity : Math.hypot(away, eye[2] - z)
+        shown = depth <= reach
+        size = Math.min(Math.max(Math.max(camera.distance, POI_MIN_REACH_METRES / UNIT_METRES) / depth, POI_MIN_SCALE), 1)
       }
       shown = shown && iconsOn && !hiddenTypes.has(poi.type) && (!shownLocations || shownLocations.has(poi.location))
-      if (shown && threeD && hiddenByTerrain(poi.x, poi.y, z)) {
+      if (shown && threeD && hiddenByTerrain(poi.x, poi.y, z, size)) {
         shown = false
       }
-      if (shown !== poi.shown) {
-        poi.shown = shown
-        poi.hiddenAt = now
-        poi.element.classList.toggle("shown", shown)
-      }
-      if (!shown && now - poi.hiddenAt > POI_FADE_MS) {
+      if (!shown && !poi.shown && now - poi.hiddenAt > POI_FADE_MS) {
         continue
       }
       if (threeD && z === null) {
@@ -1281,12 +1308,19 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
         poi.element.style.display = inside ? "" : "none"
       }
       if (inside) {
-        placed.push({ poi, point: threeD ? rough : project(poi.x, poi.y, heightAt(poi.x, poi.y)) })
+        placed.push({ poi, point: threeD ? rough : project(poi.x, poi.y, heightAt(poi.x, poi.y)), shown, depth, size: size * screenScale })
+      } else {
+        showPoi(poi, shown, now)
       }
     }
-    spread(placed)
-    for (const { poi, point } of placed) {
-      position(poi, point)
+    if (threeD) {
+      hideCovered(placed)
+    } else {
+      spread(placed, POI_SPACING * screenScale)
+    }
+    for (const { poi, point, shown, size } of placed) {
+      showPoi(poi, shown, now)
+      position(poi, point, size)
     }
     if (scale && unitPixels > 0) {
       const metresPerPixel = UNIT_METRES / unitPixels
