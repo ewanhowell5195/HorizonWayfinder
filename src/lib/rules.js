@@ -29,8 +29,8 @@ export const TRIBES = [
   { id: "tribeFarZenith", tribe: "farZenith", name: "Far Zenith", games: ["hfw"] },
   { id: "tribeNone", tribe: null, name: "No tribe", games: ["hzd", "hfw"] },
   { id: "tribeNeutral", tribe: "neutral", name: "Neutral", games: ["hzd", "hfw"], since: 5 },
-  { id: "tribeEclipse", tribe: "eclipse", name: "Eclipse", games: ["hzd"], parent: "shadowCarja", after: "tribeShadowCarja", since: 5 },
-  { id: "tribeRebels", tribe: "tenakthRebels", name: "Tenakth Rebels", games: ["hfw"], parent: "tenakthAllClans", after: "tribeTenakthSkyClan", since: 5 },
+  { id: "tribeEclipse", tribe: "eclipse", name: "Eclipse", games: ["hzd"], parent: "shadowCarja", since: 5 },
+  { id: "tribeRebels", tribe: "tenakthRebels", name: "Tenakth Rebels", games: ["hfw"], parent: "tenakthAllClans", since: 5 },
   { id: "tribeBandits", tribe: "bandits", name: "Bandits", games: ["hzd"], since: 5 }
 ]
 
@@ -107,8 +107,7 @@ export function tribeOn(rules, tribe) {
 }
 
 export function tribeOrder(list) {
-  const position = tribe => tribe.after ? TRIBES.findIndex(item => item.id === tribe.after) + 0.5 : TRIBES.indexOf(tribe)
-  return list.slice().sort((a, b) => position(a) - position(b))
+  return list.slice().sort((a, b) => a.name.localeCompare(b.name))
 }
 
 export function missingRules(rules) {
