@@ -261,7 +261,7 @@ export async function createBackdrop(canvas, { onSlide, onFog, fogTop, fogRight 
     fogMiddle = fogMiddle === null || fogPortrait !== portrait ? target : fogMiddle + (target - fogMiddle) * Math.min(1, (now - lastDraw) / 1000 * FOG_EASE)
     fogPortrait = portrait
     const middle = fogMiddle
-    onFog?.(portrait ? null : middle)
+    onFog?.(portrait ? null : middle, portrait ? screenHeight - middle - band * 0.05 : null)
     gl.viewport(0, 0, width, height)
     gl.useProgram(program)
     gl.activeTexture(gl.TEXTURE1)

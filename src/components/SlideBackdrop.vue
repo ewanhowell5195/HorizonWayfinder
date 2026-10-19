@@ -11,14 +11,20 @@ const cycling = ref(false)
 const timerStyle = { "--slide-ms": `${SLIDE_MS}ms` }
 let mounted
 let fogValue = null
+let fogTopValue = null
 const ready = new Promise(resolve => mounted = resolve).then(() => createBackdrop(canvas.value, {
   fogTop: () => document.querySelector(".screen.visible .screen-main, .round-intro.visible .eyebrow")?.getBoundingClientRect().top,
   fogRight: () => document.querySelector(".screen.visible .screen-main")?.getBoundingClientRect().right,
-  onFog(middle) {
+  onFog(middle, top) {
     const value = middle === null ? "" : `${Math.round(middle)}px`
     if (value !== fogValue) {
       fogValue = value
       document.documentElement.style.setProperty("--fog-middle", value)
+    }
+    const topValue = top === null ? "" : `${Math.round(top)}px`
+    if (topValue !== fogTopValue) {
+      fogTopValue = topValue
+      document.documentElement.style.setProperty("--fog-top", topValue)
     }
   },
   onSlide(entry) {

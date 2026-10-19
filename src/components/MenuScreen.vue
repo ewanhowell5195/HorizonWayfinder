@@ -1,11 +1,12 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref } from "vue"
+import ArrowIcon from "./ArrowIcon.vue"
 
 const SCROLL_FADE_PX = 40
 const COMPACT_MS = 450
 
-defineProps({ visible: Boolean, label: { type: String, default: "Horizon Wayfinder" }, width: Number })
-const emit = defineEmits(["fold"])
+defineProps({ visible: Boolean, label: { type: String, default: "Horizon Wayfinder" }, width: Number, back: Boolean })
+const emit = defineEmits(["fold", "back"])
 const fade = ref(0)
 const scrolledPx = ref(0)
 const compact = ref(false)
@@ -94,6 +95,7 @@ onBeforeUnmount(() => observer?.disconnect())
         <slot name="top" />
       </header>
       <div ref="main" class="screen-main" :style="width ? { maxWidth: `${width}px` } : null">
+        <button v-if="back" class="back rise" type="button" @click="emit('back')"><ArrowIcon />Back</button>
         <slot />
       </div>
       <slot name="bottom" />
@@ -101,3 +103,46 @@ onBeforeUnmount(() => observer?.disconnect())
     <slot name="after" />
   </section>
 </template>
+
+<style scoped>
+.back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin: 0 0 clamp(14px, 2.4vh, 24px);
+  padding: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: none;
+  transition: color 0.2s ease;
+}
+
+.back svg {
+  width: 14px;
+  height: 14px;
+  transform: scaleX(-1);
+  transition: translate 0.25s ease;
+}
+
+.back:hover {
+  color: var(--text);
+  filter: none;
+}
+
+.back:hover svg {
+  translate: -4px 0;
+}
+
+@media (max-width: 760px) {
+  .back {
+    float: right;
+    /* the .eyebrow line box in styles.css */
+    height: calc(13px * 1.4);
+    margin: 0 0 0 16px;
+  }
+}
+</style>

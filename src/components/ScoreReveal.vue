@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import { loadCard } from "../lib/cauldrons.js"
+import SwapText from "./SwapText.vue"
 
 // the card art is 770 x 380; its visible rows run 6 to 297, the score band 110 to 223
 const CARD_WIDTH = 770
@@ -73,8 +74,8 @@ defineExpose({ insets })
       </div>
     </div>
     <div class="actions button-row bright">
-      <button class="secondary" type="button" @click="emit(viewing ? 'back' : 'view')"><Transition name="swap-text" mode="out-in"><span :key="viewing">{{ viewing ? "View map" : "View photosphere" }}</span></Transition></button>
-      <button type="button" @click="emit('next')">{{ lastRound ? "See results" : "Next round" }}</button>
+      <button class="secondary" type="button" @click="emit(viewing ? 'back' : 'view')"><SwapText :text="viewing ? 'View map' : 'View photosphere'" /></button>
+      <button type="button" @click="emit('next')"><SwapText :text="lastRound ? 'See results' : 'Next round'" /></button>
     </div>
   </div>
 </template>
@@ -198,20 +199,6 @@ defineExpose({ insets })
 
 .actions span {
   display: inline-block;
-}
-
-.swap-text-enter-active, .swap-text-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.swap-text-enter-from {
-  opacity: 0;
-  transform: translateX(8px);
-}
-
-.swap-text-leave-to {
-  opacity: 0;
-  transform: translateX(-8px);
 }
 
 @media (max-width: 760px) {

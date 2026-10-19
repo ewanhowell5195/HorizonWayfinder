@@ -122,19 +122,23 @@ function play() {
   }
 }
 
-@media (max-width: 560px) {
-  .button-row {
-    width: auto;
+@media (max-width: 760px) {
+  .button-row > .action {
+    min-width: calc((100vw - 40px) / 3);
   }
 
   .atlas small {
     display: none;
   }
-}
 
-@media (max-width: 760px) {
   .steps, .count {
     display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .button-row {
+    width: auto;
   }
 }
 </style>

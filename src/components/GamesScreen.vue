@@ -1,8 +1,10 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from "vue"
+import { computed, onBeforeUnmount, reactive, ref, watch } from "vue"
 import { LOCATIONS } from "../lib/rules.js"
+import AreaRules from "./AreaRules.vue"
 import ArrowIcon from "./ArrowIcon.vue"
 import MenuScreen from "./MenuScreen.vue"
+import SwapText from "./SwapText.vue"
 
 const GAMES = [
   { id: "both", name: "Both games", detail: "Zero Dawn and Forbidden West", glyph: ["one", "plus", "two"] },
@@ -11,14 +13,14 @@ const GAMES = [
   { id: "custom", name: "Custom", detail: "Pick the areas yourself", glyph: ["custom"] }
 ]
 
-const props = defineProps({ visible: Boolean, ready: Boolean, counts: Object, locationCounts: Object, available: Number, games: String, preview: String, lit: Array, litTribes: Array, tribeAreas: Object, frames: Object, tribes: Array, tribeFilter: Boolean, tribeCounts: Object, matched: Boolean, customRules: Object, seed: String, seedError: String })
-const emit = defineEmits(["games", "rule", "tribe-filter", "next", "seed"])
+const props = defineProps({ visible: Boolean, ready: Boolean, counts: Object, locationCounts: Object, available: Number, games: String, preview: String, lit: Array, litTribes: Array, tribeAreas: Object, frames: Object, tribes: Array, tribeFilter: Boolean, tribeCounts: Object, matched: Boolean, customRules: Object, seed: String, seedError: String, phone: Boolean })
+const emit = defineEmits(["games", "rule", "tribe-filter", "next", "seed", "customise"])
 const seedText = ref(props.seed || "")
 const custom = computed(() => props.games === "custom")
-const rows = ["hzd", "hfw"].map(game => LOCATIONS.filter(location => location.game === game))
+const inlineRules = computed(() => custom.value && !props.phone)
+const customising = computed(() => custom.value && props.phone)
 const maps = computed(() => props.games === "custom" || props.preview === "both" ? ["hzd", "hfw"] : props.preview ? [props.preview] : [])
 const areas = Object.fromEntries(["hzd", "hfw"].map(game => [game, LOCATIONS.filter(location => location.game === game).map(location => location.id)]))
-const tribeList = ref(null)
 const MAP_GAP = 28
 const mapsBox = reactive({ width: 0, height: 0 })
 const imageSizes = reactive({})
@@ -76,34 +78,6 @@ onBeforeUnmount(() => {
   wideQuery.removeEventListener("change", updateWide)
 })
 
-watch(() => props.tribes.map(tribe => tribe.id).join(), async () => {
-  const list = tribeList.value?.$el
-  if (!list) {
-    return
-  }
-  const from = list.offsetHeight
-  await nextTick()
-  const to = list.offsetHeight
-  if (from === to) {
-    return
-  }
-  list.style.height = `${from}px`
-  list.offsetHeight
-  list.style.height = `${to}px`
-  list.addEventListener("transitionend", function done(event) {
-    if (event.target === list) {
-      list.style.height = ""
-      list.removeEventListener("transitionend", done)
-    }
-  })
-})
-
-function leaving(el) {
-  el.style.left = `${el.offsetLeft}px`
-  el.style.top = `${el.offsetTop}px`
-  el.style.width = `${el.offsetWidth}px`
-}
-
 watch(() => props.seed, value => seedText.value = value || "")
 
 function plural(value) {
@@ -142,29 +116,14 @@ function playSeed() {
       </button>
     </div>
     <div class="rise" style="--i: 4">
-      <div class="collapse" :class="{ open: custom }" :inert="!custom">
+      <div class="collapse" :class="{ open: inlineRules }" :inert="!inlineRules">
         <div class="collapse-inner">
-          <div v-for="(row, n) in rows" :key="n" class="rules">
-            <button v-for="location in row" :key="location.id" class="choice rule" :class="{ on: customRules[location.id] }" type="button" role="switch" :aria-checked="customRules[location.id]" @click="emit('rule', location.id, !customRules[location.id])"><span class="switch"></span><strong>{{ location.name }}</strong><span>{{ plural(locationCounts?.[location.id] || 0) }}</span></button>
-          </div>
-          <button class="toggle" :class="{ on: tribeFilter }" type="button" role="switch" :aria-checked="tribeFilter" @click="emit('tribe-filter', !tribeFilter)"><span class="switch"></span>Filter by tribe</button>
-          <div class="collapse" :class="{ open: tribeFilter }" :inert="!tribeFilter">
-            <div class="collapse-inner">
-              <TransitionGroup ref="tribeList" tag="div" name="tribe" class="rules tribes" @before-leave="leaving">
-                <button v-for="tribe in tribes" :key="tribe.id" class="choice rule" :class="{ on: customRules[tribe.id] }" type="button" role="switch" :aria-checked="customRules[tribe.id]" @click="emit('rule', tribe.id, !customRules[tribe.id])"><span class="switch"></span><strong>{{ tribe.name }}</strong><span>{{ tribeCounts?.[tribe.id] || 0 }}</span></button>
-              </TransitionGroup>
-            </div>
-          </div>
-          <div class="collapse" :class="{ open: !matched }" :inert="matched">
-            <div class="collapse-inner">
-              <p class="unscored">Your score will not be remembered for custom games.</p>
-            </div>
-          </div>
+          <AreaRules :custom-rules="customRules" :location-counts="locationCounts" :tribes="tribes" :tribe-filter="tribeFilter" :tribe-counts="tribeCounts" :matched="matched" @rule="(id, on) => emit('rule', id, on)" @tribe-filter="on => emit('tribe-filter', on)" />
         </div>
       </div>
     </div>
     <div class="cta rise" style="--i: 5">
-      <button class="action" type="button" :disabled="!ready || !available" @click="emit('next')">Next<ArrowIcon /></button>
+      <button class="action" type="button" :disabled="!ready || (!customising && !available)" @click="emit(customising ? 'customise' : 'next')"><SwapText :text="customising ? 'Customise' : 'Next'"><ArrowIcon /></SwapText></button>
     </div>
     <form class="seed rise" style="--i: 6" @submit.prevent="playSeed">
       <input v-model="seedText" type="text" spellcheck="false" autocomplete="off" placeholder="Paste a seed or link to replay a game" aria-label="Seed">
@@ -343,88 +302,6 @@ function playSeed() {
   text-transform: uppercase;
 }
 
-.tribes .rule {
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  min-height: 46px;
-}
-
-.tribes .rule .switch {
-  grid-row: auto;
-}
-
-.tribes .rule > span:last-child {
-  justify-self: end;
-  padding-left: 2px;
-  white-space: nowrap;
-}
-
-.collapse .rules {
-  padding: 8px 0 0;
-}
-
-.collapse .rules:first-child {
-  padding: 12px 0 0;
-}
-
-.toggle {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  margin: 20px 0 0;
-  padding: 0;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: var(--muted);
-  background: none;
-  transition: color 0.2s ease;
-}
-
-.toggle::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.toggle.on::after {
-  transform: none;
-}
-
-.toggle:hover, .toggle.on {
-  color: var(--text);
-  filter: none;
-}
-
-.tribes {
-  position: relative;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  max-width: none;
-  transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.tribe-move, .tribe-enter-active, .tribe-leave-active {
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
-}
-
-.tribe-enter-from, .tribe-leave-to {
-  opacity: 0;
-  transform: scale(0.9);
-}
-
-.tribe-leave-active {
-  position: absolute;
-}
-
-.unscored {
-  margin: 12px 0 0;
-}
-
 .cta {
   margin-top: clamp(18px, 3vh, 30px);
 }
@@ -469,13 +346,6 @@ function playSeed() {
   color: var(--error);
 }
 
-@media (max-width: 1840px) {
-  .tribes {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    max-width: 768px;
-  }
-}
-
 @media (max-width: 1100px) {
   .picks {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -515,20 +385,11 @@ function playSeed() {
 }
 
 @media (max-width: 760px) {
-  .custom .maps {
-    display: none;
-  }
-
   .maps {
     top: 64px;
-    bottom: auto;
-    left: 16px;
-    right: 16px;
-    height: calc(28vh - 64px);
-  }
-
-  .tribes {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    bottom: calc(100% - var(--fog-top, 28vh) + 16px);
+    left: 36px;
+    right: 36px;
   }
 
   .map-row {
@@ -536,15 +397,20 @@ function playSeed() {
   }
 
   .picks {
-    gap: 8px;
+    gap: 6px;
   }
 
   .pick {
-    padding: 12px 14px;
+    grid-template-columns: 26px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 2px;
+    padding: 10px;
   }
 
   .pick strong {
-    font-size: 18px;
+    font-size: 15px;
+    line-height: 1.1;
   }
 
   .pick span {
@@ -552,12 +418,17 @@ function playSeed() {
   }
 
   .pick small {
-    margin: 4px 0 0;
+    grid-column: 2;
+    margin: 0;
+    font-size: 10px;
+    letter-spacing: 0.1em;
   }
 
   .glyph {
-    --h: 24px;
-    margin: 0 0 8px;
+    --h: 16px;
+    grid-row: span 2;
+    justify-content: center;
+    margin: 0;
   }
 }
 </style>

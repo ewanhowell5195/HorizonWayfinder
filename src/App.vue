@@ -12,7 +12,9 @@ import ScoreReveal from "./components/ScoreReveal.vue"
 import RoundIntro from "./components/RoundIntro.vue"
 import SlideBackdrop from "./components/SlideBackdrop.vue"
 import GamesScreen from "./components/GamesScreen.vue"
+import AreasScreen from "./components/AreasScreen.vue"
 import SetupScreen from "./components/SetupScreen.vue"
+import CustomiseScreen from "./components/CustomiseScreen.vue"
 import FinalResults from "./components/FinalResults.vue"
 import { MAX_POINTS, ROUNDS, distanceLabel, formatDistance, points, readStore, shuffle, wait, writeStore } from "./lib/game.js"
 import { cauldronFor, loadCard } from "./lib/cauldrons.js"
@@ -31,7 +33,7 @@ const SEPARATE_PIECE = "hfw-east"
 const QUIET_MS = 700
 const MAP_DELAY_MS = 1200
 const SWAP_FADE_MS = 200
-const SCREEN_PATHS = { home: "", games: "play", setup: "setup", challenge: "challenge", game: "game", atlas: "map" }
+const SCREEN_PATHS = { home: "", games: "play", areas: "play", setup: "setup", customise: "setup", challenge: "challenge", game: "game", atlas: "map" }
 const FOUND = "found"
 const RECENT = "recentRounds"
 const RECENT_GAMES = 2
@@ -75,7 +77,11 @@ const tribeFilter = ref(readStore("tribeFilter") === "true")
 const games = ref("both")
 const intro = ref(false)
 const setup = ref(false)
+const customising = ref(false)
+const phoneQuery = matchMedia("(max-width: 760px)")
+const phone = ref(phoneQuery.matches)
 const choosing = ref(false)
+const pickingAreas = ref(false)
 const atlas = ref(false)
 const found = ref(new Set(readJson(FOUND) || []))
 const bestGuesses = ref(readJson(BEST_GUESSES) || {})
@@ -409,6 +415,30 @@ function goSetup() {
   show("setup")
 }
 
+function goBack() {
+  if (customising.value) {
+    leaveTo("setup")
+  } else if (setup.value) {
+    leaveTo(phone.value && games.value === "custom" ? "areas" : "games")
+  } else {
+    leaveTo(pickingAreas.value ? "games" : "home")
+  }
+}
+
+function goAreas() {
+  enter("areas")
+  show("areas")
+}
+
+function goCustomise() {
+  enter("customise")
+  show("customise")
+}
+
+function updatePhone() {
+  phone.value = phoneQuery.matches
+}
+
 function customLocations(base) {
   return games.value === "custom" ? Object.assign({}, base, Object.fromEntries(LOCATIONS.map(location => [location.id, customRules.value[location.id]]).concat(TRIBES.map(tribe => [tribe.id, !tribeFilter.value || customRules.value[tribe.id] || !availableTribes.value.includes(tribe)])))) : Object.assign(withGames(base, games.value), Object.fromEntries(TRIBES.map(tribe => [tribe.id, true])))
 }
@@ -466,8 +496,10 @@ function show(screen) {
   if (screen === "challenge" && !challenge.value) {
     replaceScreen("home")
   }
-  setup.value = screen === "setup"
-  choosing.value = screen === "games"
+  setup.value = screen === "setup" || screen === "customise"
+  customising.value = screen === "customise"
+  choosing.value = screen === "games" || screen === "areas"
+  pickingAreas.value = screen === "areas"
   atlas.value = screen === "atlas"
 }
 
@@ -1164,7 +1196,7 @@ function onKey(event) {
     return
   }
   if (isMenu.value && !challenge.value && event.key === "Escape" && (setup.value || choosing.value || atlas.value)) {
-    leaveTo(setup.value ? "games" : "home")
+    goBack()
     return
   }
   if (isMenu.value || (event.key !== " " && event.key !== "Enter")) {
@@ -1189,6 +1221,7 @@ function onKey(event) {
 onMounted(async () => {
   window.addEventListener("keydown", onKey)
   window.addEventListener("popstate", onHistory)
+  phoneQuery.addEventListener("change", updatePhone)
   let sharedView = null
   const resumable = screenFromPath() === "game" && savedGame(gameParams())
   if (resumable) {
@@ -1208,8 +1241,10 @@ onMounted(async () => {
     }
     replaceScreen(["games", "atlas"].includes(path) ? path : ["setup", "game", "challenge"].includes(path) ? "games" : "home", ["games", "atlas"].includes(path) ? screenUrl(path) + (devPick ? `?dev=${encodeURIComponent(devPick)}` : "") + location.hash : undefined)
   }
-  setup.value = history.state.screen === "setup"
-  choosing.value = history.state.screen === "games"
+  setup.value = history.state.screen === "setup" || history.state.screen === "customise"
+  customising.value = history.state.screen === "customise"
+  choosing.value = history.state.screen === "games" || history.state.screen === "areas"
+  pickingAreas.value = history.state.screen === "areas"
   atlas.value = history.state.screen === "atlas"
   booting.value = false
   poolLoading = loadPool()
@@ -1248,9 +1283,12 @@ const pageTitle = computed(() => {
     return "Challenge"
   }
   if (setup.value) {
-    return "Game Setup"
+    return customising.value && phone.value ? "Custom Rules" : "Game Setup"
   }
-  return choosing.value ? "New Game" : null
+  if (choosing.value) {
+    return pickingAreas.value && phone.value ? "Custom Areas" : "New Game"
+  }
+  return null
 })
 
 watchEffect(() => {
@@ -1312,6 +1350,7 @@ watch(previewGame, (value, old) => {
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", onKey)
   window.removeEventListener("popstate", onHistory)
+  phoneQuery.removeEventListener("change", updatePhone)
 })
 </script>
 
@@ -1356,8 +1395,10 @@ onBeforeUnmount(() => {
   <AtlasScreen :visible="isMenu && atlas && !viewing" :ready="atlasReady" :found="foundRounds.length" :total="pool.length" :dev="devMode" :selected="devSelected" :tab="mapTab" @tab="setMapTab" @view="openView({ atlas: devSelected.name })" />
   <ChallengeScreen :visible="isMenu && Boolean(challenge)" :ready="canPlay" :rules="challenge?.seed.rules" :games="challenge?.seed.games" :rounds="challenge?.seed.rounds.length || 0" :score="challenge?.score" :error="seedError" @play="playChallenge" />
   <HomeScreen :visible="homeShown" :count="pool.length" :found="found.size" :ready="canPlay" :best="overall.best" :last="overall.last" :average="overall.average" @play="goGames" @atlas="goAtlas" @fold="bottom => homeFold = bottom" />
-  <GamesScreen :visible="isMenu && !challenge && choosing" :ready="canPlay" :counts="counts" :location-counts="locationCounts" :available="choices.length" :games="games" :preview="previewGame" :lit="litAreas" :lit-tribes="litTribes" :tribe-areas="tribeAreas" :frames="tribeFrames" :tribes="availableTribes" :tribe-filter="tribeFilter" :tribe-counts="tribeCounts" :matched="chosenGames !== 'custom'" :custom-rules="customRules" :seed="seedInput" :seed-error="seedError" @games="setGames" @rule="setRule" @tribe-filter="setTribeFilter" @next="goSetup" @seed="openChallenge" />
-  <SetupScreen :visible="isMenu && !challenge && setup" :ready="canPlay" :scored="scored" :available="choices.length" :rounds="roundCount" :games="chosenGames" :mode="mode" :custom-rules="customRules" :best="best" :last="last" :average="average" @start="newGame" @mode="setMode" @rule="setRule" />
+  <GamesScreen :visible="isMenu && !challenge && choosing && !(pickingAreas && phone)" back @back="goBack" :phone="phone" @customise="goAreas":ready="canPlay" :counts="counts" :location-counts="locationCounts" :available="choices.length" :games="games" :preview="previewGame" :lit="litAreas" :lit-tribes="litTribes" :tribe-areas="tribeAreas" :frames="tribeFrames" :tribes="availableTribes" :tribe-filter="tribeFilter" :tribe-counts="tribeCounts" :matched="chosenGames !== 'custom'" :custom-rules="customRules" :seed="seedInput" :seed-error="seedError" @games="setGames" @rule="setRule" @tribe-filter="setTribeFilter" @next="goSetup" @seed="openChallenge" />
+  <AreasScreen :visible="isMenu && !challenge && choosing && pickingAreas && phone" back @back="goBack" :ready="canPlay" :available="choices.length" :location-counts="locationCounts" :tribes="availableTribes" :tribe-filter="tribeFilter" :tribe-counts="tribeCounts" :matched="chosenGames !== 'custom'" :custom-rules="customRules" @rule="setRule" @tribe-filter="setTribeFilter" @next="goSetup" />
+  <SetupScreen :visible="isMenu && !challenge && setup && !(customising && phone)" back @back="goBack" :ready="canPlay" :scored="scored" :available="choices.length" :rounds="roundCount" :games="chosenGames" :mode="mode" :custom-rules="customRules" :best="best" :last="last" :average="average" :phone="phone" @start="newGame" @mode="setMode" @rule="setRule" @customise="goCustomise" />
+  <CustomiseScreen :visible="isMenu && !challenge && setup && customising && phone" back @back="goBack" :ready="canPlay" :available="choices.length" :rounds="roundCount" :custom-rules="customRules" @start="newGame" @rule="setRule" />
   <RoundIntro :visible="intro" :number="status.index" :count="status.count" :progress="status.progress" :label="status.label" :tip="status.tip" :mode="gameMode" :countdown="status.countdown" :steps="COUNTDOWN" :waiting="status.waiting" :held="status.held" @begin="startHeld" />
 </template>
 

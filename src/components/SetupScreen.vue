@@ -1,21 +1,20 @@
 <script setup>
 import { computed } from "vue"
-import { MAX_POINTS } from "../lib/game.js"
 import { MODES, MODE_RULES, RULES } from "../lib/rules.js"
-import ArrowIcon from "./ArrowIcon.vue"
 import MenuScreen from "./MenuScreen.vue"
+import RuleSwitches from "./RuleSwitches.vue"
+import StartRow from "./StartRow.vue"
 import TickerNumber from "./TickerNumber.vue"
 
 const GAME_NAMES = { both: "Both games", hzd: "Zero Dawn", hfw: "Forbidden West", custom: "Custom locations" }
 
-const props = defineProps({ visible: Boolean, ready: Boolean, scored: Boolean, available: Number, rounds: Number, games: String, mode: String, customRules: Object, best: Number, last: Number, average: Number })
-const emit = defineEmits(["start", "mode", "rule"])
+const props = defineProps({ visible: Boolean, ready: Boolean, scored: Boolean, available: Number, rounds: Number, games: String, mode: String, customRules: Object, best: Number, last: Number, average: Number, phone: Boolean })
+const emit = defineEmits(["start", "mode", "rule", "customise"])
 
 const custom = computed(() => props.mode === "custom")
+const inlineRules = computed(() => custom.value && !props.phone)
+const customising = computed(() => custom.value && props.phone)
 const modeRules = computed(() => MODE_RULES[props.mode] || {})
-const count = computed(() => props.available || 0)
-const roundsLabel = computed(() => count.value ? `${props.rounds} rounds` : "No photospheres yet")
-const maxLabel = computed(() => count.value ? `Up to ${(props.rounds * MAX_POINTS).toLocaleString()} points` : "Capture some to play")
 </script>
 
 <template>
@@ -36,21 +35,16 @@ const maxLabel = computed(() => count.value ? `Up to ${(props.rounds * MAX_POINT
       </div>
     </div>
     <div class="rise" style="--i: 4">
-      <div class="collapse" :class="{ open: custom }" :inert="!custom">
+      <div class="collapse" :class="{ open: inlineRules }" :inert="!inlineRules">
         <div class="collapse-inner">
           <div class="group">
             <small class="label">Custom rules</small>
-            <div class="rules">
-              <button v-for="rule in RULES" :key="rule.id" class="choice rule" :class="{ on: customRules[rule.id] }" type="button" role="switch" :aria-checked="customRules[rule.id]" @click="emit('rule', rule.id, !customRules[rule.id])"><span class="switch"></span><strong>{{ rule.name }}</strong><span>{{ rule.detail }}</span></button>
-            </div>
+            <RuleSwitches :custom-rules="customRules" @rule="(id, on) => emit('rule', id, on)" />
           </div>
         </div>
       </div>
     </div>
-    <div class="cta rise" style="--i: 5">
-      <button class="action" type="button" :disabled="!ready || !count" @click="emit('start')">Start<ArrowIcon /></button>
-      <div class="cta-meta"><strong>{{ roundsLabel }}</strong><span>{{ maxLabel }}</span></div>
-    </div>
+    <StartRow class="rise" style="--i: 5" :ready="ready" :available="available" :rounds="rounds" :text="customising ? 'Customise' : 'Start'" @go="emit(customising ? 'customise' : 'start')" />
     <div class="rise" style="--i: 6">
       <div class="collapse" :class="{ open: !scored }" :inert="scored">
         <div class="collapse-inner">
@@ -144,22 +138,7 @@ const maxLabel = computed(() => count.value ? `Up to ${(props.rounds * MAX_POINT
 }
 
 .cta {
-  display: flex;
-  align-items: center;
-  gap: 24px;
   margin-top: clamp(4px, 1vh, 10px);
-}
-
-.cta-meta {
-  display: grid;
-  gap: 2px;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.cta-meta strong {
-  font-size: 15px;
-  color: var(--text);
 }
 
 .stats {
@@ -169,6 +148,20 @@ const maxLabel = computed(() => count.value ? `Up to ${(props.rounds * MAX_POINT
 @media (max-width: 760px) {
   .options, .features {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .features {
+    gap: 6px 24px;
+    font-size: 13px;
+  }
+
+  .features li {
+    gap: 6px;
+  }
+
+  .features svg {
+    width: 12px;
+    height: 12px;
   }
 }
 </style>

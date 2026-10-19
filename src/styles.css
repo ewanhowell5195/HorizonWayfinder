@@ -166,7 +166,7 @@ button.secondary, .button.secondary {
   filter: none;
 }
 
-@media (max-width: 560px) {
+@media (max-width: 760px) {
   .button-row > * {
     --pad-y: 12px;
     padding: var(--pad-y) 8px;
@@ -195,16 +195,29 @@ button.secondary, .button.secondary {
   transform: translateX(4px);
 }
 
-@media (max-width: 560px) {
+@media (max-width: 760px) {
   .action {
     --pad-y: 13px;
+    justify-content: center;
+    min-width: calc((100vw - 40px) / 3);
     gap: 10px;
     padding: var(--pad-y) 20px var(--pad-y) 22px;
     font-size: 14px;
   }
 
   .button-row > .action {
+    min-width: 0;
     letter-spacing: 0.1em;
+  }
+}
+
+@media (max-width: 420px) {
+  .action {
+    min-width: calc((100vw - 40px) / 2);
+  }
+
+  .button-row > .action {
+    min-width: 0;
   }
 }
 
@@ -497,6 +510,18 @@ a.mark[href]:hover {
   .screen-main {
     align-self: safe end;
     padding-bottom: 12px;
+  }
+
+  .screen-title {
+    font-size: min(12vw, clamp(48px, min(7.6vw, 10vh), 116px));
+  }
+
+  .screen-title span {
+    display: inline-block;
+  }
+
+  .screen-title span + span {
+    margin-left: 0.25em;
   }
 
   .stat-row .stat-block strong {
