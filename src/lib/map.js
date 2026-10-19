@@ -1691,16 +1691,12 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
     if (pointers.size === 2 && pinch && threeD) {
       const next = pinchState()
       turn(camera.heading + (next.angle - pinch.angle), camera.tilt - (next.y - pinch.y) * ORBIT_SPEED)
-      camera.distance *= pinch.span / Math.max(next.span, 1)
-      clampCamera()
-      camera.target = camera.distance
+      zoomAround(next.x, next.y, pinch.span / Math.max(next.span, 1))
       pinch = next
     } else if (pointers.size === 2 && pinch) {
       const next = pinchState()
       dragTo(next.x, next.y)
-      camera.distance *= pinch.span / Math.max(next.span, 1)
-      clampCamera()
-      camera.target = camera.distance
+      zoomAround(next.x, next.y, pinch.span / Math.max(next.span, 1))
       pinch = next
       startGrab(next.x, next.y)
     } else if (threeD) {
@@ -1781,6 +1777,23 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
     camera.target *= Math.exp(delta * 0.0018)
     velocity = { x: 0, y: 0 }
     clampCamera()
+    needsDraw = true
+  }
+
+  function zoomAround(x, y, factor) {
+    updateCamera()
+    const point = pick(x, y) || planeHit(x, y, 0)
+    camera.distance *= factor
+    clampCamera()
+    camera.target = camera.distance
+    updateCamera()
+    const now = point && planeHit(x, y, point.z)
+    if (now) {
+      camera.x += point.x - now.x
+      camera.y += point.y - now.y
+      pivotSet = false
+      clampCamera()
+    }
     needsDraw = true
   }
 
