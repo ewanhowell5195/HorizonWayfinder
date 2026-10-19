@@ -196,6 +196,13 @@ button.secondary, .button.secondary {
 }
 
 @media (max-width: 560px) {
+  .action {
+    --pad-y: 13px;
+    gap: 10px;
+    padding: var(--pad-y) 20px var(--pad-y) 22px;
+    font-size: 14px;
+  }
+
   .button-row > .action {
     letter-spacing: 0.1em;
   }
