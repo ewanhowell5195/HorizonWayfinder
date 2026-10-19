@@ -1,0 +1,23 @@
+/cauldrons/*
+  X-Robots-Tag: noindex
+
+/rounds/*
+  X-Robots-Tag: noindex
+
+/pins/*
+  X-Robots-Tag: noindex
+
+/glyphs/*
+  X-Robots-Tag: noindex
+
+/hud/*
+  X-Robots-Tag: noindex
+
+/summary/*
+  X-Robots-Tag: noindex
+
+/map/*
+  X-Robots-Tag: noindex
+
+/fonts/*
+  X-Robots-Tag: noindex
