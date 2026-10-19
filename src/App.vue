@@ -81,6 +81,7 @@ const found = ref(new Set(readJson(FOUND) || []))
 const bestGuesses = ref(readJson(BEST_GUESSES) || {})
 const swapped = ref(false)
 const restoring = ref(false)
+const booting = ref(true)
 const swapFading = ref(false)
 const pool = ref([])
 const mapsReady = ref(false)
@@ -117,8 +118,8 @@ const finalResults = ref(null)
 
 const isMenu = computed(() => phase.value === "menu")
 const isRound = computed(() => phase.value === "round")
-const homeShown = computed(() => isMenu.value && !challenge.value && !setup.value && !choosing.value && !atlas.value && !restoring.value)
-const markLabel = computed(() => !isMenu.value || restoring.value || viewing.value ? null : homeShown.value ? "Photosphere guessing game" : "Horizon Wayfinder")
+const homeShown = computed(() => !booting.value && isMenu.value && !challenge.value && !setup.value && !choosing.value && !atlas.value && !restoring.value)
+const markLabel = computed(() => booting.value || !isMenu.value || restoring.value || viewing.value ? null : homeShown.value ? "Photosphere guessing game" : "Horizon Wayfinder")
 const showsMap = computed(() => (phase.value === "result" || phase.value === "summary" || atlas.value) && !viewing.value)
 const devMode = ref(readStore("devMode") === "1")
 const foundRounds = computed(() => pool.value.filter(round => found.value.has(round.name)))
@@ -1210,6 +1211,7 @@ onMounted(async () => {
   setup.value = history.state.screen === "setup"
   choosing.value = history.state.screen === "games"
   atlas.value = history.state.screen === "atlas"
+  booting.value = false
   poolLoading = loadPool()
   if (sharedView) {
     openView({ atlas: sharedView })
@@ -1350,7 +1352,7 @@ onBeforeUnmount(() => {
   <div ref="menuMark" class="menu-mark" :class="{ shown: Boolean(markLabel) }" :style="{ translate: homeShown && markPush ? `0 ${markPush}px` : null }">
     <a class="mark" :href="homeShown ? null : '/'" :title="homeShown ? null : 'Main menu'" @click.exact="markClick"><i class="mark-emblem"></i><Transition name="mark" mode="out-in"><span v-if="markLabel" :key="markLabel" class="mark-text">{{ markLabel }}</span></Transition></a>
   </div>
-  <SlideBackdrop ref="backdrop" :active="((isMenu && !atlas) || intro) && !restoring" :timer="isMenu && !atlas && !restoring" :caption="!choosing" :dock="homeShown" />
+  <SlideBackdrop ref="backdrop" :active="((isMenu && !atlas) || intro) && !restoring && !booting" :timer="isMenu && !atlas && !restoring && !booting" :caption="!choosing" :dock="homeShown" />
   <AtlasScreen :visible="isMenu && atlas && !viewing" :ready="atlasReady" :found="foundRounds.length" :total="pool.length" :dev="devMode" :selected="devSelected" :tab="mapTab" @tab="setMapTab" @view="openView({ atlas: devSelected.name })" />
   <ChallengeScreen :visible="isMenu && Boolean(challenge)" :ready="canPlay" :rules="challenge?.seed.rules" :games="challenge?.seed.games" :rounds="challenge?.seed.rounds.length || 0" :score="challenge?.score" :error="seedError" @play="playChallenge" />
   <HomeScreen :visible="homeShown" :count="pool.length" :found="found.size" :ready="canPlay" :best="overall.best" :last="overall.last" :average="overall.average" @play="goGames" @atlas="goAtlas" @fold="bottom => homeFold = bottom" />
