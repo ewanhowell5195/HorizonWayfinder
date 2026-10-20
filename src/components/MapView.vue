@@ -23,6 +23,7 @@ defineExpose({
   place: (game, x, y) => map.place(game, x, y),
   locate: (x, y) => map.locate(x, y),
   addMarker: (element, x, y) => map.addMarker(element, x, y),
+  pinReadout: (x, y) => map?.pinReadout(x, y),
   setLines: (pairs, classes) => map?.setLines(pairs, classes),
   setLineProgress: progress => map?.setLineProgress(progress),
   fit: (points, options) => map?.fit(points, options),

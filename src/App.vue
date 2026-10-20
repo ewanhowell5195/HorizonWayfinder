@@ -832,6 +832,9 @@ async function restoreGame(saved) {
       await loadMaps()
       if (game === current && game.state === "round") {
         placeGuess({ x: saved.guess.x, y: saved.guess.y })
+        if (!matchMedia("(hover: hover)").matches) {
+          minimap.value.pinReadout(saved.guess.x, saved.guess.y)
+        }
       }
     }
     return

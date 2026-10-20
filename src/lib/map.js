@@ -331,6 +331,7 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
   let relief = fullRelief / 2
   let hover = null
   let hoverMoved = false
+  let pinned = null
   let orbit = null
   let spin = { heading: 0, tilt: 0 }
   let panning = null
@@ -1439,7 +1440,7 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
     if (onView) {
       onView({ zoom: gameZoom, pending: inflight + uploads.length })
     }
-    if (tracksHover && hover) {
+    if (tracksHover && (hover || pinned)) {
       hoverMoved = false
       updateHover()
     }
@@ -1525,8 +1526,43 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
     needsDraw = true
   }
 
+  async function finestHeight(layer, x, y) {
+    for (let level = 0; level < layer.levels; level++) {
+      const size = tileSize(level)
+      const i = Math.floor(((x - layer.offset[0]) / layer.scale - layer.domain.minX) / size)
+      const j = Math.floor((layer.domain.maxY + 1 - (y - layer.offset[1]) / layer.scale) / size)
+      if (!exists(layer, level, i, j)) {
+        continue
+      }
+      const heights = cache.get(key(layer, level, i, j))?.heights || fillMissing(await fetchHeights(`${root}pyramids/${layer.id}/${level}/${i}_${j}.bin`, MESH + 1), layer, level, i, j)
+      const box = bounds(layer, level, i, j)
+      return sampleDepth(heights, (x - box.x) / box.size, (box.y - y) / box.size)
+    }
+    return null
+  }
+
+  function pinnedPoint() {
+    return pinned && pinned.height !== null ? { x: pinned.x, y: pinned.y, z: pinned.height * relief } : null
+  }
+
+  function pinReadout(x, y) {
+    hover = null
+    const pin = { x, y, height: null }
+    pinned = pin
+    const place = locate(x, y)
+    if (place) {
+      finestHeight(place.layer, x, y).then(height => {
+        if (pinned === pin) {
+          pin.height = height
+          updateHover()
+        }
+      }).catch(error => console.warn(error))
+    }
+    updateHover()
+  }
+
   function updateHover() {
-    const point = hover && pick(hover.x, hover.y)
+    const point = pinned ? pinnedPoint() : hover && pick(hover.x, hover.y)
     const place = point && locate(point.x, point.y)
     const elevation = place && Math.round((point.z / relief * 255 - (games[place.layer.game].seaLevel || 0)) * DEPTH_METRES / 255)
     if (scale) {
@@ -1650,6 +1686,7 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
     if (tracksHover && event.pointerType === "mouse") {
       hover = { x: event.clientX, y: event.clientY }
       hoverMoved = true
+      pinned = null
     }
     if (orbit) {
       if (press && Math.hypot(event.clientX - press.x, event.clientY - press.y) > CLICK_DISTANCE) {
@@ -1727,8 +1764,17 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
       }
       return
     }
-    if (event.type === "pointerup" && press && pointers.size === 1 && onPick) {
-      pickAt(event.clientX, event.clientY)
+    if (event.type === "pointerup" && press && pointers.size === 1) {
+      if (tracksHover && event.pointerType !== "mouse") {
+        updateCamera()
+        const point = pick(event.clientX, event.clientY)
+        if (point) {
+          pinReadout(point.x, point.y)
+        }
+      }
+      if (onPick) {
+        pickAt(event.clientX, event.clientY)
+      }
     }
     press = null
     pointers.delete(event.pointerId)
@@ -1749,10 +1795,11 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
     }
   }
 
-  canvas.addEventListener("pointerleave", () => {
-    if (tracksHover) {
+  canvas.addEventListener("pointerleave", event => {
+    if (tracksHover && event.pointerType === "mouse") {
       hover = null
       hoverMoved = true
+      pinned = null
     }
   })
   canvas.addEventListener("pointerup", endPointer)
@@ -2227,6 +2274,7 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
       gl.getExtension("WEBGL_lose_context")?.loseContext()
     },
     place,
+    pinReadout,
     locate(x, y) {
       return locate(x, y) || nearestPiece(x, y)
     },
