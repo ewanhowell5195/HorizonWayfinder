@@ -253,7 +253,7 @@ export async function createBackdrop(canvas, { onSlide, onFog, fogTop, fogRight 
     let target
     if (portrait) {
       const top = fogTop?.()
-      target = Math.max(screenHeight * PORTRAIT_FOG + band * 0.3, top === undefined || top === null ? 0 : screenHeight - top + PORTRAIT_FOG_MARGIN + band * PORTRAIT_FOG_REACH)
+      target = top === undefined || top === null ? screenHeight * PORTRAIT_FOG + band * 0.3 : screenHeight - top + PORTRAIT_FOG_MARGIN + band * PORTRAIT_FOG_REACH
     } else {
       const right = fogRight?.()
       target = right === undefined || right === null ? Math.min(Math.max(screenWidth * 0.52, 940), screenWidth * 0.72) : Math.max(screenWidth / 2, right + FOG_MARGIN)
