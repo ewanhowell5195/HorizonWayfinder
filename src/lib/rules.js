@@ -51,6 +51,20 @@ export const MODES = [
 
 export const MODE_NAMES = Object.fromEntries(MODES.map(mode => [mode.id, mode.name]))
 
+export const GAME_NAMES = { both: "Both games", hzd: "Zero Dawn", hfw: "Forbidden West", custom: "Custom locations" }
+
+export const TIME_LIMITS = [10, 20, 30, 45, 60, 90, 120, 180, 300, 0]
+
+export function timeLabel(seconds) {
+  if (!seconds) {
+    return "Unlimited"
+  }
+  if (seconds < 60 || seconds % 60) {
+    return `${seconds} seconds`
+  }
+  return seconds === 60 ? "1 minute" : `${seconds / 60} minutes`
+}
+
 export function fullRules(rules) {
   return Object.fromEntries(SETTINGS.map(setting => [setting.id, rules?.[setting.id] !== false]))
 }

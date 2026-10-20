@@ -1,10 +1,11 @@
 import { TRIBES, bitsToRules, gamesOf, rulesToBits } from "./rules.js"
 
-const VERSION = "5"
+const VERSION = "6"
 const EPOCH = Date.UTC(2020, 0, 1) / 1000
 const TIME_DIGITS = 6
 const VIEW_DIGITS = 3
-const RULE_DIGITS = { 3: 3, 4: 5, 5: 6 }
+const RULE_DIGITS = { 3: 3, 4: 5, 5: 6, 6: 6 }
+const LIMIT_DIGITS = { 6: 2 }
 
 function checksum(text) {
   let sum = 0
@@ -43,8 +44,8 @@ export function seededRandom(code) {
   }
 }
 
-export function encodeSeed({ rules, rounds }) {
-  const body = VERSION + rulesToBits(rules).toString(36).padStart(RULE_DIGITS[VERSION], "0") + rounds.map(round => nameToSeconds(round.name).toString(36).padStart(TIME_DIGITS, "0") + round.code.toString(36).padStart(VIEW_DIGITS, "0")).join("")
+export function encodeSeed({ rules, rounds, time }) {
+  const body = VERSION + rulesToBits(rules).toString(36).padStart(RULE_DIGITS[VERSION], "0") + (time || 0).toString(36).padStart(LIMIT_DIGITS[VERSION], "0") + rounds.map(round => nameToSeconds(round.name).toString(36).padStart(TIME_DIGITS, "0") + round.code.toString(36).padStart(VIEW_DIGITS, "0")).join("")
   return body + checksum(body)
 }
 
@@ -64,7 +65,8 @@ export function decodeSeed(input) {
   const code = (fromLink ? fromLink[1] : text).toLowerCase()
   const roundLength = TIME_DIGITS + VIEW_DIGITS
   const digits = RULE_DIGITS[code[0]]
-  const head = 1 + digits
+  const limitDigits = LIMIT_DIGITS[code[0]] || 0
+  const head = 1 + digits + limitDigits
   if (!/^[0-9a-z]+$/.test(code) || !digits || (code.length - head - 1) % roundLength !== 0 || code.length <= head + 1) {
     return null
   }
@@ -79,6 +81,7 @@ export function decodeSeed(input) {
   }
   const version = Number(code[0])
   const unknown = TRIBES.filter(tribe => version === 3 || (tribe.since ?? 4) > version)
-  const rules = bitsToRules(parseInt(code.slice(1, head), 36) | rulesToBits(Object.fromEntries(unknown.map(tribe => [tribe.id, true]))))
-  return { code, games: gamesOf(rules), rules, rounds }
+  const rules = bitsToRules(parseInt(code.slice(1, 1 + digits), 36) | rulesToBits(Object.fromEntries(unknown.map(tribe => [tribe.id, true]))))
+  const time = limitDigits ? parseInt(code.slice(1 + digits, head), 36) : 0
+  return { code, games: gamesOf(rules), rules, rounds, time }
 }

@@ -1,12 +1,12 @@
 <script setup>
 import { computed } from "vue"
 import { MAX_POINTS } from "../lib/game.js"
-import { LOCATIONS, MODES, MODE_NAMES, locationNames, missingRules, modeOf, tribesOf } from "../lib/rules.js"
+import { LOCATIONS, MODES, MODE_NAMES, locationNames, missingRules, modeOf, timeLabel, tribesOf } from "../lib/rules.js"
 import ArrowIcon from "./ArrowIcon.vue"
 import MenuScreen from "./MenuScreen.vue"
 import SlapTitle from "./SlapTitle.vue"
 
-const props = defineProps({ visible: Boolean, ready: Boolean, rules: Object, games: String, rounds: Number, score: Number, error: String })
+const props = defineProps({ visible: Boolean, ready: Boolean, rules: Object, games: String, rounds: Number, time: Number, score: Number, error: String })
 const emit = defineEmits(["play"])
 
 const hasScore = computed(() => props.score !== null && props.score !== undefined)
@@ -42,6 +42,7 @@ function play() {
       <div class="stat-block detail"><small class="label">Rounds</small><strong>{{ rounds }}</strong><span>Up to {{ (rounds * MAX_POINTS).toLocaleString() }} points</span></div>
       <div class="stat-block detail"><small class="label">Game</small><strong>{{ gameName }}</strong><span>{{ gameDetail }}</span></div>
       <div class="stat-block detail"><small class="label">Mode</small><strong>{{ modeName }}</strong><span>{{ modeDetail }}</span></div>
+      <div v-if="time" class="stat-block detail"><small class="label">Time</small><strong>{{ timeLabel(time) }}</strong><span>Per round</span></div>
       <div v-if="hasScore" class="stat-block detail target"><small class="label">Score to beat</small><strong>{{ score.toLocaleString() }}</strong><span>out of {{ (rounds * MAX_POINTS).toLocaleString() }}</span></div>
     </div>
     <div class="rise" style="--i: 5">

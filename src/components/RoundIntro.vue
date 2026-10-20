@@ -1,10 +1,10 @@
 <script setup>
 import { computed } from "vue"
-import { MODE_NAMES } from "../lib/rules.js"
+import { MODE_NAMES, timeLabel } from "../lib/rules.js"
 
 const RING = 2 * Math.PI * 28
 
-const props = defineProps({ visible: Boolean, number: Number, count: Number, progress: Number, label: String, tip: String, mode: String, countdown: Number, steps: Number, waiting: Boolean, held: Boolean })
+const props = defineProps({ visible: Boolean, number: Number, count: Number, progress: Number, label: String, tip: String, mode: String, time: Number, countdown: Number, steps: Number, waiting: Boolean, held: Boolean })
 const emit = defineEmits(["begin"])
 
 const bar = computed(() => ({ transform: `scaleX(${props.progress})` }))
@@ -14,7 +14,7 @@ const digit = computed(() => props.waiting || props.countdown <= 0 ? "" : props.
 
 <template>
   <section class="round-intro" :class="{ visible }">
-    <p class="eyebrow rise">Round<span v-if="mode !== 'normal'" class="mode">{{ MODE_NAMES[mode] }}</span></p>
+    <p class="eyebrow rise">Round<span v-if="mode !== 'normal'" class="mode">{{ MODE_NAMES[mode] }}</span><span v-if="time" class="mode">{{ timeLabel(time) }}</span></p>
     <div class="number rise" style="--i: 1"><span>{{ number }}</span><small>/ {{ count }}</small></div>
     <div class="start rise" style="--i: 2">
       <Transition name="swap" mode="out-in">
