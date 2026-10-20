@@ -226,6 +226,16 @@ function goGames() {
   show("games")
 }
 
+async function quickStart() {
+  setGames(["both", "hzd", "hfw", "custom"].includes(readStore("games")) ? readStore("games") : "both")
+  await loadPool()
+  if (choices.value.length) {
+    newGame()
+  } else {
+    goGames()
+  }
+}
+
 function goAtlas() {
   enter("atlas")
   show("atlas")
@@ -1132,6 +1142,7 @@ async function newGame() {
   if (!choices.value.length) {
     return
   }
+  writeStore("games", games.value)
   begin(pickRounds(choices.value).map(round => Object.assign({}, round, { code: randomCode() })), rules.value)
 }
 
@@ -1369,7 +1380,7 @@ onBeforeUnmount(() => {
   <SlideBackdrop ref="backdrop" :active="((isMenu && !atlas) || intro) && !restoring && !booting" :timer="isMenu && !atlas && !restoring && !booting" :caption="!choosing" :dock="homeShown" />
   <AtlasScreen :visible="isMenu && atlas && !viewing" :ready="atlasReady" :found="foundRounds.length" :total="pool.length" :dev="devMode" :selected="devSelected" :tab="mapTab" @tab="setMapTab" @view="openView({ atlas: devSelected.name })" />
   <ChallengeScreen :visible="isMenu && Boolean(challenge) && !booting && !restoring":ready="canPlay" :rules="challenge?.seed.rules" :games="challenge?.seed.games" :rounds="challenge?.seed.rounds.length || 0" :score="challenge?.score" :error="seedError" @play="playChallenge" />
-  <HomeScreen :visible="homeShown" :count="pool.length" :found="found.size" :ready="canPlay" :best="overall.best" :last="overall.last" :average="overall.average" @play="goGames" @atlas="goAtlas" @fold="bottom => homeFold = bottom" />
+  <HomeScreen :visible="homeShown" :count="pool.length" :found="found.size" :ready="canPlay" :best="overall.best" :last="overall.last" :average="overall.average" @play="goGames" @quick="quickStart" @atlas="goAtlas" @fold="bottom => homeFold = bottom" />
   <GamesScreen :visible="isMenu && !challenge && choosing && !(pickingAreas && phone)" back @back="goBack" :phone="phone" @customise="goTo('areas')" :ready="canPlay" :counts="counts" :location-counts="locationCounts" :available="choices.length" :games="games" :preview="previewGame" :lit="litAreas" :lit-tribes="litTribes" :tribe-areas="tribeAreas" :frames="tribeFrames" :tribes="availableTribes" :tribe-filter="tribeFilter" :tribe-counts="tribeCounts" :matched="chosenGames !== 'custom'" :custom-rules="customRules" :seed="seedInput" :seed-error="seedError" @games="setGames" @rule="setRule" @tribe-filter="setTribeFilter" @next="goTo('setup')" @seed="openChallenge" />
   <AreasScreen :visible="isMenu && !challenge && choosing && pickingAreas && phone" back @back="goBack" :ready="canPlay" :available="choices.length" :location-counts="locationCounts" :tribes="availableTribes" :tribe-filter="tribeFilter" :tribe-counts="tribeCounts" :matched="chosenGames !== 'custom'" :custom-rules="customRules" @rule="setRule" @tribe-filter="setTribeFilter" @next="goTo('setup')" />
   <SetupScreen :visible="isMenu && !challenge && setup && !(customising && phone)" back @back="goBack" :ready="canPlay" :scored="scored" :available="choices.length" :rounds="roundCount" :games="chosenGames" :mode="mode" :custom-rules="customRules" :best="best" :last="last" :average="average" :phone="phone" @start="newGame" @mode="setMode" @rule="setRule" @customise="goTo('customise')" />

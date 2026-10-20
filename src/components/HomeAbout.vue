@@ -88,9 +88,9 @@ const SHOTS = [
     <section class="made">
       <p class="eyebrow">Made with Photosphere</p>
       <p>Every photosphere is captured in game with Photosphere, a mod for Horizon Forbidden West and Horizon Zero Dawn Remastered.</p>
-      <div class="button-row bright">
-        <a class="button secondary" href="https://www.nexusmods.com/horizonforbiddenwest/mods/226" target="_blank" rel="noopener">Horizon Forbidden West</a>
-        <a class="button secondary" href="https://www.nexusmods.com/horizonzerodawnremastered/mods/57" target="_blank" rel="noopener">Horizon Zero Dawn Remastered</a>
+      <div class="button-row bright stack">
+        <a class="button secondary above" href="https://www.nexusmods.com/horizonforbiddenwest/mods/226" target="_blank" rel="noopener">Horizon Forbidden West</a>
+        <a class="button secondary below" href="https://www.nexusmods.com/horizonzerodawnremastered/mods/57" target="_blank" rel="noopener">Horizon Zero Dawn Remastered</a>
       </div>
     </section>
     <footer class="site-footer">
@@ -326,26 +326,7 @@ h3 {
   }
 
   .made .button-row {
-    --step: 14px;
-    --gap: 8px;
-    grid-auto-flow: row;
-    row-gap: 0;
     width: 100%;
-  }
-
-  .made .button-row > :first-child {
-    padding-bottom: calc(var(--pad-y) + var(--step));
-    clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, calc(100% - var(--step)) calc(100% - var(--step)), var(--step) calc(100% - var(--step)), 0 calc(100% - var(--step) * 2));
-  }
-
-  .made .button-row > :last-child {
-    margin-top: calc(var(--step) * -2);
-    padding-top: calc(var(--pad-y) + var(--step) + var(--gap));
-    clip-path: polygon(0 calc(var(--gap) * 1.4142), calc(var(--step) - var(--gap) * 0.4142) calc(var(--step) + var(--gap)), calc(100% - var(--step) - var(--gap) * 0.4142) calc(var(--step) + var(--gap)), 100% calc(var(--step) * 2 + var(--gap) * 1.4142), 100% 100%, 16px 100%, 0 calc(100% - 16px));
-  }
-
-  .made .button-row > *::before {
-    display: none;
   }
 
   .shot.flipped img {

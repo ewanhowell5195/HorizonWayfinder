@@ -6,7 +6,7 @@ import MenuScreen from "./MenuScreen.vue"
 import SlapTitle from "./SlapTitle.vue"
 
 const props = defineProps({ visible: Boolean, count: Number, found: Number, ready: Boolean, best: Number, last: Number, average: Number })
-const emit = defineEmits(["play", "atlas", "fold"])
+const emit = defineEmits(["play", "quick", "atlas", "fold"])
 
 const countLabel = computed(() => props.count ? `${props.count} locations` : "")
 const bestLabel = computed(() => props.best ? props.best.toLocaleString() : "None yet")
@@ -26,9 +26,10 @@ function play() {
     <p class="eyebrow rise" style="--i: 1">Guess the location</p>
     <SlapTitle :visible="visible" text="Wayfinder" />
     <p class="lede rise" style="--i: 3">Each round puts you somewhere in Horizon Zero Dawn or Horizon Forbidden West. Have a look around, then drop a pin on the map where you think you are.</p>
-    <div class="button-row rise" style="--i: 4">
-      <button class="action" type="button" :disabled="!ready" @click="play">Play<ArrowIcon /></button>
-      <button class="secondary action atlas" type="button" :disabled="!ready" @click="emit('atlas')">View Map<small v-if="found">{{ found }} found</small></button>
+    <div class="button-row stack rise" style="--i: 4">
+      <button class="action above" type="button" :disabled="!ready" @click="play">Play<ArrowIcon /></button>
+      <button class="secondary bright action above" type="button" :disabled="!ready" @click="emit('quick')">Quick start</button>
+      <button class="secondary action atlas below" type="button" :disabled="!ready" @click="emit('atlas')">View Map<small v-if="found">{{ found }} found</small></button>
     </div>
     <ol class="steps rise" style="--i: 5">
       <li><em>01</em><strong>Look around</strong><span>Drag to turn, scroll to zoom in on the details.</span></li>
@@ -123,8 +124,24 @@ function play() {
 }
 
 @media (max-width: 760px) {
-  .button-row > .action {
+  .button-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .button-row.stack > .action {
     min-width: calc((100vw - 40px) / 3);
+  }
+
+  .button-row > .action.above:first-child {
+    clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% calc(100% - var(--step)), var(--step) calc(100% - var(--step)), 0 calc(100% - var(--step) * 2));
+  }
+
+  .button-row > .action.bright {
+    clip-path: polygon(calc(-1 * var(--tuck)) 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, calc(100% - var(--step)) calc(100% - var(--step)), 0 calc(100% - var(--step)), 0 var(--tuck));
+  }
+
+  .button-row > .atlas {
+    grid-column: 1 / -1;
   }
 
   .atlas small {

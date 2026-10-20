@@ -121,10 +121,12 @@ button.secondary, .button.secondary {
   --pad-y: 14px;
   --cut: calc(var(--pad-y) + 0.7em);
   --tuck: calc(var(--cut) + 8px - 8px * sqrt(2));
+  --fill: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--pad-y) 16px;
+  background: var(--fill);
   line-height: 1.4;
   font-size: 15px;
   letter-spacing: 0.22em;
@@ -144,7 +146,8 @@ button.secondary, .button.secondary {
   right: 100%;
   width: var(--tuck);
   height: var(--tuck);
-  background: inherit;
+  background: var(--fill);
+  transition: background 0.2s ease;
 }
 
 .button-row > :not(:last-child) {
@@ -156,22 +159,23 @@ button.secondary, .button.secondary {
 }
 
 .button-row > .secondary {
+  --fill: rgba(255, 255, 255, 0.1);
   border: 0;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--fill);
 }
 
 .button-row > .secondary:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.2);
+  --fill: rgba(255, 255, 255, 0.2);
   filter: none;
 }
 
-.button-row.bright > .secondary {
+.button-row.bright > .secondary, .button-row > .secondary.bright {
+  --fill: #e8eaed;
   color: #111;
-  background: #e8eaed;
 }
 
-.button-row.bright > .secondary:hover:not(:disabled) {
-  background: var(--accent);
+.button-row.bright > .secondary:hover:not(:disabled), .button-row > .secondary.bright:hover:not(:disabled) {
+  --fill: var(--accent);
   filter: none;
 }
 
@@ -181,6 +185,32 @@ button.secondary, .button.secondary {
     padding: var(--pad-y) 8px;
     font-size: 13px;
     letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  .button-row.stack {
+    --gap: 8px;
+    grid-auto-flow: row;
+    row-gap: 0;
+  }
+
+  .button-row.stack > * {
+    --step: var(--cut);
+  }
+
+  .button-row.stack > .above {
+    padding-bottom: calc(var(--pad-y) + var(--step));
+    clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, calc(100% - var(--step)) calc(100% - var(--step)), var(--step) calc(100% - var(--step)), 0 calc(100% - var(--step) * 2));
+  }
+
+  .button-row.stack > .below {
+    margin-top: calc(var(--step) * -2);
+    padding-top: calc(var(--pad-y) + var(--step) + var(--gap));
+    clip-path: polygon(0 calc(var(--gap) * 1.4142), calc(var(--step) - var(--gap) * 0.4142) calc(var(--step) + var(--gap)), calc(100% - var(--step) - var(--gap) * 0.4142) calc(var(--step) + var(--gap)), 100% calc(var(--step) * 2 + var(--gap) * 1.4142), 100% 100%, 16px 100%, 0 calc(100% - 16px));
+  }
+
+  .button-row.stack > .below::before {
+    display: none;
   }
 }
 
@@ -215,8 +245,11 @@ button.secondary, .button.secondary {
   }
 
   .button-row > .action {
-    min-width: 0;
     letter-spacing: 0.1em;
+  }
+
+  .button-row:has(> :nth-child(3)) > .action {
+    min-width: 0;
   }
 }
 
@@ -225,7 +258,11 @@ button.secondary, .button.secondary {
     min-width: calc((100vw - 40px) / 2);
   }
 
-  .button-row > .action {
+  .button-row > .action:not(:only-child) {
+    min-width: calc((100vw - 48px) / 2);
+  }
+
+  .button-row:has(> :nth-child(3)) > .action {
     min-width: 0;
   }
 }
