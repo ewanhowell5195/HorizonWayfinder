@@ -714,7 +714,7 @@ function startHeld() {
   beginRound?.()
 }
 
-async function startRound(countdown = true) {
+async function startRound(countdown = true, resumed = false) {
   startHeld()
   const current = game
   const round = current.rounds[current.index]
@@ -724,7 +724,7 @@ async function startRound(countdown = true) {
   clearMarkers()
   current.guess = null
   hasGuess.value = false
-  if (countdown) {
+  if (!resumed) {
     current.spent = 0
   }
   timeLeft.value = current.time ? Math.ceil(current.time - current.spent / 1000) : null
@@ -866,7 +866,7 @@ async function restoreGame(saved) {
   if (game.state === "round") {
     const current = game
     preload(current.index)
-    startRound(false)
+    startRound(Boolean(current.time), true)
     restoring.value = false
     if (saved.guess) {
       await loadMaps()
