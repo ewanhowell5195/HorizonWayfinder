@@ -864,7 +864,14 @@ function placeGuess(place) {
     const element = pin()
     element.classList.add("removable")
     element.title = "Click to remove"
-    element.addEventListener("click", removeGuess)
+    let pressed = false
+    element.addEventListener("pointerdown", () => pressed = true)
+    element.addEventListener("click", () => {
+      if (pressed) {
+        removeGuess()
+      }
+      pressed = false
+    })
     guessMarker = minimap.value.addMarker(element, place.x, place.y)
   }
   hasGuess.value = true
