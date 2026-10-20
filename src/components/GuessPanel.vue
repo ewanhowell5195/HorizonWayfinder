@@ -1,28 +1,31 @@
 <script setup>
-import { computed, ref, watch } from "vue"
+import { computed, onBeforeUnmount, ref } from "vue"
+import SwapText from "./SwapText.vue"
 
 const props = defineProps({ hidden: Boolean, hasGuess: Boolean, swapped: Boolean })
 const emit = defineEmits(["guess", "swap"])
-const open = ref(false)
+const compactQuery = matchMedia("(hover: none), (max-width: 640px)")
+const compact = ref(compactQuery.matches)
+const updateCompact = () => compact.value = compactQuery.matches
+compactQuery.addEventListener("change", updateCompact)
+onBeforeUnmount(() => compactQuery.removeEventListener("change", updateCompact))
 const swapTitle = computed(() => props.swapped ? "Swap back: photosphere full screen" : "Swap: map full screen")
 const guessLabel = computed(() => props.hasGuess ? "Guess" : "Place your guess")
 function guess() {
   emit("guess")
 }
-
-watch(() => props.hidden, () => open.value = false)
 </script>
 
 <template>
-  <div class="guess" :class="{ open, hidden, swapped }">
+  <div class="guess" :class="{ hidden, swapped }">
     <div class="map">
       <slot />
       <div id="sphere-box" class="sphere-box"></div>
       <button class="icon-button swap-toggle" type="button" :title="swapTitle" :aria-label="swapTitle" @click="emit('swap')"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter"><path d="M2.5 5.5h10M10 3l2.5 2.5L10 8M13.5 10.5h-10M6 8l-2.5 2.5L6 13" /></svg></button>
     </div>
-    <div class="actions">
-      <button class="secondary map-toggle" type="button" @click="open = !open">{{ swapped ? "View" : "Map" }}</button>
-      <button class="submit" type="button" :disabled="!hasGuess" @click="guess">{{ guessLabel }}</button>
+    <div class="actions" :class="{ 'button-row': compact, bright: compact }">
+      <button v-if="compact" class="secondary" type="button" @click="emit('swap')"><SwapText :text="swapped ? 'Photosphere' : 'Map'" /></button>
+      <button class="submit" type="button" :disabled="!hasGuess" @click="guess"><SwapText :text="guessLabel" /></button>
     </div>
   </div>
 </template>
@@ -62,7 +65,7 @@ watch(() => props.hidden, () => open.value = false)
   z-index: -1;
 }
 
-.guess:hover, .guess.open {
+.guess:hover {
   width: min(100vh * 1280 / 1440, calc(100vw - var(--edge) * 2), calc((100vh - var(--edge) * 2 - var(--gap) - var(--actions) + var(--tuck)) * var(--shape)));
   transition-delay: 0s;
 }
@@ -97,7 +100,7 @@ watch(() => props.hidden, () => open.value = false)
     linear-gradient(to top right, transparent 50%, var(--border) 50%, var(--border) calc(50% + 1px), transparent calc(50% + 1px)) right bottom / var(--tuck) var(--tuck) no-repeat;
 }
 
-.guess:hover .map, .guess.open .map {
+.guess:hover .map {
   opacity: 1;
   transition-delay: 0s;
 }
@@ -118,7 +121,7 @@ watch(() => props.hidden, () => open.value = false)
   filter: none;
 }
 
-.guess:hover .swap-toggle, .guess.open .swap-toggle {
+.guess:hover .swap-toggle {
   opacity: 1;
   pointer-events: auto;
   transition-delay: 0s;
@@ -146,12 +149,12 @@ watch(() => props.hidden, () => open.value = false)
   transition: opacity 0.15s ease 0.5s;
 }
 
-.guess:hover .map :deep(.map-scale), .guess.open .map :deep(.map-scale), .guess:hover .map :deep(.map-elevation), .guess.open .map :deep(.map-elevation), .guess:hover .map :deep(.map-mode), .guess.open .map :deep(.map-mode) {
+.guess:hover .map :deep(.map-scale), .guess:hover .map :deep(.map-elevation), .guess:hover .map :deep(.map-mode) {
   opacity: 1;
   transition-delay: 0s;
 }
 
-.guess:hover .map :deep(.map-mode), .guess.open .map :deep(.map-mode) {
+.guess:hover .map :deep(.map-mode) {
   pointer-events: auto;
 }
 
@@ -160,7 +163,7 @@ watch(() => props.hidden, () => open.value = false)
   transition: opacity 0.15s ease 0.5s;
 }
 
-.guess:hover .map :deep(.map-poi img), .guess.open .map :deep(.map-poi img) {
+.guess:hover .map :deep(.map-poi img) {
   opacity: 1;
   transition-delay: 0s;
 }
@@ -170,7 +173,7 @@ watch(() => props.hidden, () => open.value = false)
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.5s;
 }
 
-.guess:hover .map :deep(.marker.removable img), .guess.open .map :deep(.marker.removable img) {
+.guess:hover .map :deep(.marker.removable img) {
   transform: none;
   transition-delay: 0s;
 }
@@ -181,11 +184,16 @@ watch(() => props.hidden, () => open.value = false)
   height: var(--actions);
 }
 
+.actions.button-row {
+  display: grid;
+  align-items: stretch;
+}
+
 .actions button {
   flex: 1;
 }
 
-.submit {
+.actions:not(.button-row) > .submit {
   padding: 15px 20px;
   font-size: 15px;
   letter-spacing: 0.22em;
@@ -205,19 +213,6 @@ watch(() => props.hidden, () => open.value = false)
   display: block;
 }
 
-.map-toggle {
-  display: none;
-}
-
-@media (max-width: 560px) {
-  .submit {
-    padding: 15px 12px;
-    font-size: 13px;
-    letter-spacing: 0.1em;
-    white-space: nowrap;
-  }
-}
-
 @media (hover: none), (max-width: 640px) {
   .guess, .guess:hover {
     left: 16px;
@@ -226,16 +221,6 @@ watch(() => props.hidden, () => open.value = false)
 
   .guess .map, .guess:hover .map {
     display: none;
-  }
-
-  .guess.open .map {
-    display: block;
-    aspect-ratio: auto;
-    height: calc(min(880px, calc(100vh - var(--edge) * 2 - var(--gap) - var(--actions))) + var(--tuck));
-  }
-
-  .map-toggle {
-    display: block;
   }
 }
 </style>

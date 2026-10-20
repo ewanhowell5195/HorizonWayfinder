@@ -126,8 +126,7 @@ const finalResults = ref(null)
 const isMenu = computed(() => phase.value === "menu")
 const isRound = computed(() => phase.value === "round")
 const homeShown = computed(() => !booting.value && isMenu.value && !challenge.value && !setup.value && !choosing.value && !atlas.value && !restoring.value)
-const markShown = computed(() => !booting.value && (isMenu.value || isRound.value) && !restoring.value && !viewing.value)
-const markText = computed(() => markShown.value && !(isRound.value && phone.value))
+const markShown = computed(() => !booting.value && (isMenu.value || isRound.value) && !restoring.value && !resuming.value && !viewing.value)
 const showsMap = computed(() => (phase.value === "result" || phase.value === "summary" || atlas.value) && !viewing.value)
 const devMode = ref(readStore("devMode") === "1")
 const foundRounds = computed(() => pool.value.filter(round => found.value.has(round.name)))
@@ -1354,12 +1353,12 @@ onBeforeUnmount(() => {
       <button class="secondary" type="button" @click="leaveView">{{ atlas ? "Back to the map" : "Back to results" }}</button>
     </div>
   </Transition>
-  <div ref="menuMark" class="menu-mark" :class="{ shown: markShown }" :style="{ translate: homeShown && markPush ? `0 ${markPush}px` : null }">
-    <a class="mark" :href="homeShown ? null : '/'" :title="homeShown ? null : 'Main menu'" @click.exact="markClick"><i class="mark-emblem"></i><Transition name="mark"><span v-if="markText" class="mark-text">Horizon Wayfinder</span></Transition></a>
+  <div ref="menuMark" class="menu-mark" :class="{ shown: markShown, stacked: isRound && phone }" :style="{ translate: homeShown && markPush ? `0 ${markPush}px` : null }">
+    <a class="mark" :href="homeShown ? null : '/'" :title="homeShown ? null : 'Main menu'" @click.exact="markClick"><i class="mark-emblem"></i><span class="mark-text">Horizon Wayfinder</span></a>
   </div>
   <SlideBackdrop ref="backdrop" :active="((isMenu && !atlas) || intro) && !restoring && !booting" :timer="isMenu && !atlas && !restoring && !booting" :caption="!choosing" :dock="homeShown" />
   <AtlasScreen :visible="isMenu && atlas && !viewing" :ready="atlasReady" :found="foundRounds.length" :total="pool.length" :dev="devMode" :selected="devSelected" :tab="mapTab" @tab="setMapTab" @view="openView({ atlas: devSelected.name })" />
-  <ChallengeScreen :visible="isMenu && Boolean(challenge)" :ready="canPlay" :rules="challenge?.seed.rules" :games="challenge?.seed.games" :rounds="challenge?.seed.rounds.length || 0" :score="challenge?.score" :error="seedError" @play="playChallenge" />
+  <ChallengeScreen :visible="isMenu && Boolean(challenge) && !booting && !restoring":ready="canPlay" :rules="challenge?.seed.rules" :games="challenge?.seed.games" :rounds="challenge?.seed.rounds.length || 0" :score="challenge?.score" :error="seedError" @play="playChallenge" />
   <HomeScreen :visible="homeShown" :count="pool.length" :found="found.size" :ready="canPlay" :best="overall.best" :last="overall.last" :average="overall.average" @play="goGames" @atlas="goAtlas" @fold="bottom => homeFold = bottom" />
   <GamesScreen :visible="isMenu && !challenge && choosing && !(pickingAreas && phone)" back @back="goBack" :phone="phone" @customise="goTo('areas')" :ready="canPlay" :counts="counts" :location-counts="locationCounts" :available="choices.length" :games="games" :preview="previewGame" :lit="litAreas" :lit-tribes="litTribes" :tribe-areas="tribeAreas" :frames="tribeFrames" :tribes="availableTribes" :tribe-filter="tribeFilter" :tribe-counts="tribeCounts" :matched="chosenGames !== 'custom'" :custom-rules="customRules" :seed="seedInput" :seed-error="seedError" @games="setGames" @rule="setRule" @tribe-filter="setTribeFilter" @next="goTo('setup')" @seed="openChallenge" />
   <AreasScreen :visible="isMenu && !challenge && choosing && pickingAreas && phone" back @back="goBack" :ready="canPlay" :available="choices.length" :location-counts="locationCounts" :tribes="availableTribes" :tribe-filter="tribeFilter" :tribe-counts="tribeCounts" :matched="chosenGames !== 'custom'" :custom-rules="customRules" @rule="setRule" @tribe-filter="setTribeFilter" @next="goTo('setup')" />
@@ -1388,6 +1387,17 @@ onBeforeUnmount(() => {
 
 .map-full.shown :deep(.map-scale) {
   left: 10px;
+}
+
+@media (hover: none), (max-width: 640px) {
+  .map-full :deep(.map-mode) {
+    top: calc(var(--header-top) + 40px);
+  }
+
+  .map-full.shown :deep(.map-scale), .map-full.shown :deep(.map-elevation) {
+    /* clears the .guess --edge and --actions in GuessPanel.vue */
+    bottom: 86px;
+  }
 }
 
 .bigmap {

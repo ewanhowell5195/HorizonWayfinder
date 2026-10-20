@@ -307,10 +307,6 @@ a.mark[href]:hover {
   color: var(--accent);
 }
 
-.mark-text {
-  display: inline-block;
-}
-
 .mark-slot {
   visibility: hidden;
 }
@@ -341,17 +337,12 @@ a.mark[href]:hover {
   pointer-events: auto;
 }
 
-.mark-enter-active {
-  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.mark-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.8, 0.2, 0.8, 0.2);
-}
-
-.mark-enter-from, .mark-leave-to {
-  opacity: 0;
-  transform: translateX(16px);
+.menu-mark.stacked .mark-text {
+  width: min-content;
+  font-size: 10px;
+  /* keeps the line box at the .mark-emblem height */
+  margin: calc((17px - 2.4em) / 2) 0;
+  line-height: 1.2;
 }
 
 @keyframes rise {
