@@ -5,7 +5,7 @@ import ArrowIcon from "./ArrowIcon.vue"
 const SCROLL_FADE_PX = 40
 const COMPACT_MS = 450
 
-defineProps({ visible: Boolean, label: { type: String, default: "Horizon Wayfinder" }, width: Number, back: Boolean })
+defineProps({ visible: Boolean, width: Number, back: Boolean })
 const emit = defineEmits(["fold", "back"])
 const fade = ref(0)
 const scrolledPx = ref(0)
@@ -91,7 +91,7 @@ onBeforeUnmount(() => observer?.disconnect())
   <section ref="section" class="screen" :class="{ visible, compact, scrolls: $slots.after }" :style="{ '--fade': fade, '--scrolled': `${scrolledPx}px` }" @scroll="scrolled">
     <div ref="fold" class="screen-fold">
       <header class="screen-top">
-        <span class="mark mark-slot" aria-hidden="true"><i class="mark-emblem"></i>{{ label }}</span>
+        <span class="mark mark-slot" aria-hidden="true"><i class="mark-emblem"></i>Horizon Wayfinder</span>
         <slot name="top" />
       </header>
       <div ref="main" class="screen-main" :style="width ? { maxWidth: `${width}px` } : null">

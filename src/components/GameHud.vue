@@ -11,19 +11,19 @@ const placement = ref("centre")
 // the .hud-compass width in HudCompass.vue
 const COMPASS_WIDTH = 630 / 1080
 const COMPASS_GAP = 16
-// the .hud inset
-const HUD_EDGE = 16
 let observer = null
 
 function measure() {
   const width = COMPASS_WIDTH * innerHeight
-  const clear = stats.value.getBoundingClientRect().right + COMPASS_GAP
-  placement.value = (innerWidth - width) / 2 >= clear ? "centre" : innerWidth - HUD_EDGE - width >= clear ? "right" : "below"
+  const mark = document.querySelector(".menu-mark .mark")?.getBoundingClientRect().right ?? 0
+  const clear = Math.max(mark, innerWidth - stats.value.getBoundingClientRect().left) + COMPASS_GAP
+  placement.value = (innerWidth - width) / 2 >= clear ? "centre" : "below"
 }
 
 onMounted(() => {
   observer = new ResizeObserver(measure)
   observer.observe(stats.value)
+  observer.observe(document.querySelector(".menu-mark .mark"))
   addEventListener("resize", measure)
   measure()
 })
@@ -36,7 +36,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="hud" :class="{ hidden }">
-    <div ref="stats" class="panel stats">
+    <div ref="stats" class="stats">
       <img class="emblem" :src="emblem" alt="">
       <div class="stat"><span>Round</span><strong>{{ round }} / {{ count }}</strong></div>
       <div class="stat"><span>Score</span><strong>{{ score.toLocaleString() }}</strong></div>
@@ -54,11 +54,17 @@ onBeforeUnmount(() => {
   top: 16px;
   left: 16px;
   right: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
   pointer-events: none;
+}
+
+.hud::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--header-top) * 2 + 60px);
+  background: linear-gradient(rgba(7, 9, 12, 0.6), rgba(7, 9, 12, 0));
 }
 
 .hud.hidden {
@@ -68,9 +74,14 @@ onBeforeUnmount(() => {
 }
 
 .stats {
+  position: fixed;
+  top: var(--header-top);
+  right: var(--header-side);
   display: flex;
+  align-items: center;
   gap: 18px;
-  padding: 8px 14px;
+  /* the .mark-emblem height in styles.css */
+  height: 17px;
 }
 
 .stat span {
@@ -99,7 +110,6 @@ onBeforeUnmount(() => {
 @media (hover: none), (max-width: 640px) {
   .stats {
     gap: 12px;
-    padding: 6px 10px;
   }
 }
 </style>

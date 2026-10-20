@@ -44,6 +44,15 @@
   --error: #f28b82;
   --font-display: "Hunter", "Oita Norm", sans-serif;
   --font-condensed: "Hunter Condensed", "Oita Norm", sans-serif;
+  --header-top: clamp(20px, 3.6vh, 34px);
+  --header-side: 56px;
+}
+
+@media (max-width: 760px) {
+  :root {
+    --header-top: 22px;
+    --header-side: 20px;
+  }
 }
 
 * {
@@ -309,8 +318,8 @@ a.mark[href]:hover {
 .menu-mark {
   position: fixed;
   z-index: 12;
-  top: clamp(20px, 3.6vh, 34px);
-  left: 56px;
+  top: var(--header-top);
+  left: var(--header-side);
   display: flex;
   font-size: 12px;
   letter-spacing: 0.26em;
@@ -343,13 +352,6 @@ a.mark[href]:hover {
 .mark-enter-from, .mark-leave-to {
   opacity: 0;
   transform: translateX(16px);
-}
-
-@media (max-width: 760px) {
-  .menu-mark {
-    top: 22px;
-    left: 20px;
-  }
 }
 
 @keyframes rise {

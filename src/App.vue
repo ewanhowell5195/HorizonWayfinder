@@ -87,6 +87,7 @@ const found = ref(new Set(readJson(FOUND) || []))
 const bestGuesses = ref(readJson(BEST_GUESSES) || {})
 const swapped = ref(false)
 const restoring = ref(false)
+const resuming = ref(false)
 const booting = ref(true)
 const swapFading = ref(false)
 const pool = ref([])
@@ -125,7 +126,8 @@ const finalResults = ref(null)
 const isMenu = computed(() => phase.value === "menu")
 const isRound = computed(() => phase.value === "round")
 const homeShown = computed(() => !booting.value && isMenu.value && !challenge.value && !setup.value && !choosing.value && !atlas.value && !restoring.value)
-const markLabel = computed(() => booting.value || !isMenu.value || restoring.value || viewing.value ? null : homeShown.value ? "Photosphere guessing game" : "Horizon Wayfinder")
+const markShown = computed(() => !booting.value && (isMenu.value || isRound.value) && !restoring.value && !viewing.value)
+const markText = computed(() => markShown.value && !(isRound.value && phone.value))
 const showsMap = computed(() => (phase.value === "result" || phase.value === "summary" || atlas.value) && !viewing.value)
 const devMode = ref(readStore("devMode") === "1")
 const foundRounds = computed(() => pool.value.filter(round => found.value.has(round.name)))
@@ -167,7 +169,6 @@ let resultMarkers = []
 let presentedRound = -1
 let presentedAtlas = null
 let viewToken = 0
-let trail = []
 let paused = null
 let introRunning = false
 let beginRound = null
@@ -207,12 +208,8 @@ function openChallenge(input) {
 function markClick(event) {
   if (!homeShown.value) {
     event.preventDefault()
-    goHome()
+    goTo("home")
   }
-}
-
-function goHome() {
-  leaveTo("home")
 }
 
 function screenUrl(screen) {
@@ -410,29 +407,14 @@ async function viewAtlas(round) {
   }
 }
 
-function goSetup() {
-  enter("setup")
-  show("setup")
-}
-
 function goBack() {
   if (customising.value) {
-    leaveTo("setup")
+    goTo("setup")
   } else if (setup.value) {
-    leaveTo(phone.value && games.value === "custom" ? "areas" : "games")
+    goTo(phone.value && games.value === "custom" ? "areas" : "games")
   } else {
-    leaveTo(pickingAreas.value ? "games" : "home")
+    goTo(pickingAreas.value ? "games" : "home")
   }
-}
-
-function goAreas() {
-  enter("areas")
-  show("areas")
-}
-
-function goCustomise() {
-  enter("customise")
-  show("customise")
 }
 
 function updatePhone() {
@@ -443,35 +425,17 @@ function customLocations(base) {
   return games.value === "custom" ? Object.assign({}, base, Object.fromEntries(LOCATIONS.map(location => [location.id, customRules.value[location.id]]).concat(TRIBES.map(tribe => [tribe.id, !tribeFilter.value || customRules.value[tribe.id] || !availableTribes.value.includes(tribe)])))) : Object.assign(withGames(base, games.value), Object.fromEntries(TRIBES.map(tribe => [tribe.id, true])))
 }
 
-function currentDepth() {
-  return history.state?.depth ?? 0
-}
-
-function mark(depth, screen) {
-  trail = trail.slice(0, depth)
-  trail[depth] = screen
-}
-
 function enter(screen, url = screenUrl(screen)) {
-  const depth = currentDepth() + 1
-  mark(depth, screen)
-  history.pushState({ screen, depth }, "", url)
+  history.pushState({ screen }, "", url)
+}
+
+function goTo(screen) {
+  enter(screen)
+  show(screen)
 }
 
 function replaceScreen(screen, url = screenUrl(screen)) {
-  mark(currentDepth(), screen)
-  history.replaceState({ screen, depth: currentDepth() }, "", url)
-}
-
-function leaveTo(screen) {
-  const depth = currentDepth()
-  const index = trail.lastIndexOf(screen, depth - 1)
-  if (index >= 0) {
-    history.go(index - depth)
-    return
-  }
-  replaceScreen(screen)
-  show(screen)
+  history.replaceState({ screen }, "", url)
 }
 
 function show(screen) {
@@ -505,11 +469,9 @@ function show(screen) {
 
 function onHistory() {
   if (!history.state) {
-    history.replaceState({ screen: screenFromPath(), depth: trail.length }, "", location.href)
+    history.replaceState({ screen: screenFromPath() }, "", location.href)
   }
-  const screen = history.state.screen
-  mark(currentDepth(), screen)
-  show(screen)
+  show(history.state.screen)
   if (history.state?.view) {
     showView(history.state.view)
   } else if (viewing.value) {
@@ -518,10 +480,7 @@ function onHistory() {
 }
 
 function openView(view) {
-  const screen = history.state.screen
-  const depth = currentDepth() + 1
-  mark(depth, screen)
-  history.pushState({ screen, depth, view }, "", view.atlas ? `${screenUrl("atlas")}?view=${encodeURIComponent(view.atlas)}${location.hash}` : location.href)
+  history.pushState({ screen: history.state.screen, view }, "", view.atlas ? `${screenUrl("atlas")}?view=${encodeURIComponent(view.atlas)}${location.hash}` : location.href)
   showView(view)
 }
 
@@ -725,7 +684,7 @@ function startHeld() {
   beginRound?.()
 }
 
-async function startRound() {
+async function startRound(countdown = true) {
   startHeld()
   const current = game
   const round = current.rounds[current.index]
@@ -746,8 +705,9 @@ async function startRound() {
   const tips = TIPS.concat(current.rules.compass ? [COMPASS_TIP] : [], current.rules.pan ? [PAN_TIP] : [LOCKED_TIP], current.rules.zoom ? [ZOOM_TIP] : [])
   status.tip = tips[Math.floor(Math.random() * tips.length)]
   phase.value = "round"
-  intro.value = true
-  introRunning = true
+  intro.value = countdown
+  introRunning = countdown
+  resuming.value = !countdown
   loadMaps().then(() => {
     minimap.value.setFeatures({ modes: current.rules.map3d, readouts: current.rules.readouts, compass: current.rules.compass, icons: current.rules.icons })
     showLocations(current)
@@ -761,7 +721,9 @@ async function startRound() {
     status.progress = round.progress || 0
     status.label = status.progress < 1 ? `Loading photosphere ${Math.round(status.progress * 100)}%` : "Ready"
   }, 60)
-  await countDown(current, round)
+  if (countdown) {
+    await countDown(current, round)
+  }
   if (!mapsReady.value && game === current) {
     status.waiting = true
     await loadMaps()
@@ -773,17 +735,20 @@ async function startRound() {
     } catch (error) {
       clearInterval(ticker)
       status.label = `Could not load ${round.name}: ${error.message}`
+      resuming.value = false
+      intro.value = true
       return
     }
   }
   clearInterval(ticker)
-  if (game === current && !document.hasFocus()) {
+  if (countdown && game === current && !document.hasFocus()) {
     status.held = true
     await new Promise(resolve => beginRound = resolve)
     beginRound = null
     status.held = false
   }
   if (game !== current) {
+    resuming.value = false
     drop(round)
     return
   }
@@ -798,6 +763,7 @@ async function startRound() {
   round.image = null
   introRunning = false
   intro.value = false
+  resuming.value = false
   const next = current.index + 1
   await revealed
   if (game === current) {
@@ -861,7 +827,7 @@ async function restoreGame(saved) {
   if (game.state === "round") {
     const current = game
     preload(current.index)
-    startRound()
+    startRound(false)
     restoring.value = false
     if (saved.guess) {
       await loadMaps()
@@ -1047,7 +1013,7 @@ function next() {
     return
   }
   if (history.state?.view) {
-    history.replaceState({ screen: history.state.screen, depth: currentDepth() }, "", location.href)
+    history.replaceState({ screen: history.state.screen }, "", location.href)
   }
   closeView()
   if (game.index + 1 < game.rounds.length) {
@@ -1369,14 +1335,14 @@ onBeforeUnmount(() => {
     <MapView ref="bigmap" pois scale modes />
     <LoadingEmblem :key="loadingKey" class="map-loading" />
   </div>
-  <div class="view-loading" :class="{ shown: viewing?.loading }">
+  <div class="view-loading" :class="{ shown: viewing?.loading || resuming }">
     <LoadingEmblem :key="loadingKey" />
   </div>
   <Transition name="card">
     <ScoreReveal v-if="phase === `result` && result" ref="resultCard" :class="{ held: mapWaiting }" :key="result.key" :card="result.card" :score="result.shown" :distance="result.distance" :miss="result.miss" :last-round="result.lastRound" :docked="result.docked" :animate="result.animate" :viewing="Boolean(viewing)" @next="next" @view="viewResult" @back="leaveView" />
   </Transition>
   <Transition name="card">
-    <FinalResults v-if="phase === `summary` && summary && !viewing" ref="finalResults" :class="{ held: mapWaiting }" :results="summary.results" :total="summary.total" :max="summary.max" :mode="gameMode" :seed="summary.seed" :animate="summary.animate" @menu="goHome" @again="newGame" @view="index => { summary.animate = false; openView({ round: index }) }" />
+    <FinalResults v-if="phase === `summary` && summary && !viewing" ref="finalResults" :class="{ held: mapWaiting }" :results="summary.results" :total="summary.total" :max="summary.max" :mode="gameMode" :seed="summary.seed" :animate="summary.animate" @menu="goTo('home')" @again="newGame" @view="index => { summary.animate = false; openView({ round: index }) }" />
   </Transition>
   <Transition name="card">
     <div v-if="viewing && !viewing.loading && (phase !== `result` || atlas)" class="panel viewing">
@@ -1388,16 +1354,16 @@ onBeforeUnmount(() => {
       <button class="secondary" type="button" @click="leaveView">{{ atlas ? "Back to the map" : "Back to results" }}</button>
     </div>
   </Transition>
-  <div ref="menuMark" class="menu-mark" :class="{ shown: Boolean(markLabel) }" :style="{ translate: homeShown && markPush ? `0 ${markPush}px` : null }">
-    <a class="mark" :href="homeShown ? null : '/'" :title="homeShown ? null : 'Main menu'" @click.exact="markClick"><i class="mark-emblem"></i><Transition name="mark" mode="out-in"><span v-if="markLabel" :key="markLabel" class="mark-text">{{ markLabel }}</span></Transition></a>
+  <div ref="menuMark" class="menu-mark" :class="{ shown: markShown }" :style="{ translate: homeShown && markPush ? `0 ${markPush}px` : null }">
+    <a class="mark" :href="homeShown ? null : '/'" :title="homeShown ? null : 'Main menu'" @click.exact="markClick"><i class="mark-emblem"></i><Transition name="mark"><span v-if="markText" class="mark-text">Horizon Wayfinder</span></Transition></a>
   </div>
   <SlideBackdrop ref="backdrop" :active="((isMenu && !atlas) || intro) && !restoring && !booting" :timer="isMenu && !atlas && !restoring && !booting" :caption="!choosing" :dock="homeShown" />
   <AtlasScreen :visible="isMenu && atlas && !viewing" :ready="atlasReady" :found="foundRounds.length" :total="pool.length" :dev="devMode" :selected="devSelected" :tab="mapTab" @tab="setMapTab" @view="openView({ atlas: devSelected.name })" />
   <ChallengeScreen :visible="isMenu && Boolean(challenge)" :ready="canPlay" :rules="challenge?.seed.rules" :games="challenge?.seed.games" :rounds="challenge?.seed.rounds.length || 0" :score="challenge?.score" :error="seedError" @play="playChallenge" />
   <HomeScreen :visible="homeShown" :count="pool.length" :found="found.size" :ready="canPlay" :best="overall.best" :last="overall.last" :average="overall.average" @play="goGames" @atlas="goAtlas" @fold="bottom => homeFold = bottom" />
-  <GamesScreen :visible="isMenu && !challenge && choosing && !(pickingAreas && phone)" back @back="goBack" :phone="phone" @customise="goAreas":ready="canPlay" :counts="counts" :location-counts="locationCounts" :available="choices.length" :games="games" :preview="previewGame" :lit="litAreas" :lit-tribes="litTribes" :tribe-areas="tribeAreas" :frames="tribeFrames" :tribes="availableTribes" :tribe-filter="tribeFilter" :tribe-counts="tribeCounts" :matched="chosenGames !== 'custom'" :custom-rules="customRules" :seed="seedInput" :seed-error="seedError" @games="setGames" @rule="setRule" @tribe-filter="setTribeFilter" @next="goSetup" @seed="openChallenge" />
-  <AreasScreen :visible="isMenu && !challenge && choosing && pickingAreas && phone" back @back="goBack" :ready="canPlay" :available="choices.length" :location-counts="locationCounts" :tribes="availableTribes" :tribe-filter="tribeFilter" :tribe-counts="tribeCounts" :matched="chosenGames !== 'custom'" :custom-rules="customRules" @rule="setRule" @tribe-filter="setTribeFilter" @next="goSetup" />
-  <SetupScreen :visible="isMenu && !challenge && setup && !(customising && phone)" back @back="goBack" :ready="canPlay" :scored="scored" :available="choices.length" :rounds="roundCount" :games="chosenGames" :mode="mode" :custom-rules="customRules" :best="best" :last="last" :average="average" :phone="phone" @start="newGame" @mode="setMode" @rule="setRule" @customise="goCustomise" />
+  <GamesScreen :visible="isMenu && !challenge && choosing && !(pickingAreas && phone)" back @back="goBack" :phone="phone" @customise="goTo('areas')" :ready="canPlay" :counts="counts" :location-counts="locationCounts" :available="choices.length" :games="games" :preview="previewGame" :lit="litAreas" :lit-tribes="litTribes" :tribe-areas="tribeAreas" :frames="tribeFrames" :tribes="availableTribes" :tribe-filter="tribeFilter" :tribe-counts="tribeCounts" :matched="chosenGames !== 'custom'" :custom-rules="customRules" :seed="seedInput" :seed-error="seedError" @games="setGames" @rule="setRule" @tribe-filter="setTribeFilter" @next="goTo('setup')" @seed="openChallenge" />
+  <AreasScreen :visible="isMenu && !challenge && choosing && pickingAreas && phone" back @back="goBack" :ready="canPlay" :available="choices.length" :location-counts="locationCounts" :tribes="availableTribes" :tribe-filter="tribeFilter" :tribe-counts="tribeCounts" :matched="chosenGames !== 'custom'" :custom-rules="customRules" @rule="setRule" @tribe-filter="setTribeFilter" @next="goTo('setup')" />
+  <SetupScreen :visible="isMenu && !challenge && setup && !(customising && phone)" back @back="goBack" :ready="canPlay" :scored="scored" :available="choices.length" :rounds="roundCount" :games="chosenGames" :mode="mode" :custom-rules="customRules" :best="best" :last="last" :average="average" :phone="phone" @start="newGame" @mode="setMode" @rule="setRule" @customise="goTo('customise')" />
   <CustomiseScreen :visible="isMenu && !challenge && setup && customising && phone" back @back="goBack" :ready="canPlay" :available="choices.length" :rounds="roundCount" :custom-rules="customRules" @start="newGame" @rule="setRule" />
   <RoundIntro :visible="intro" :number="status.index" :count="status.count" :progress="status.progress" :label="status.label" :tip="status.tip" :mode="gameMode" :countdown="status.countdown" :steps="COUNTDOWN" :waiting="status.waiting" :held="status.held" @begin="startHeld" />
 </template>

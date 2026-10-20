@@ -42,12 +42,6 @@ watch(() => props.heading, value => compass.setHeading(value))
   width: calc(630 * var(--u));
 }
 
-.hud-compass.right:not(.boxed) {
-  left: auto;
-  right: 0;
-  transform: none;
-}
-
 .hud-compass.below:not(.boxed) {
   top: 76px;
   width: min(630 * var(--u), 100%);

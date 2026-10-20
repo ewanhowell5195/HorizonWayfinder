@@ -19,7 +19,7 @@ function play() {
 </script>
 
 <template>
-  <MenuScreen class="home" :visible="visible" label="Photosphere guessing game" :width="640" @fold="bottom => emit('fold', bottom)">
+  <MenuScreen class="home" :visible="visible" :width="640" @fold="bottom => emit('fold', bottom)">
     <template #top>
       <span class="count rise">{{ countLabel }}</span>
     </template>
@@ -28,7 +28,7 @@ function play() {
     <p class="lede rise" style="--i: 3">Each round puts you somewhere in Horizon Zero Dawn or Horizon Forbidden West. Have a look around, then drop a pin on the map where you think you are.</p>
     <div class="button-row rise" style="--i: 4">
       <button class="action" type="button" :disabled="!ready" @click="play">Play<ArrowIcon /></button>
-      <button class="secondary action atlas" type="button" :disabled="!ready" @click="emit('atlas')">View Map<small>{{ found }} found</small></button>
+      <button class="secondary action atlas" type="button" :disabled="!ready" @click="emit('atlas')">View Map<small v-if="found">{{ found }} found</small></button>
     </div>
     <ol class="steps rise" style="--i: 5">
       <li><em>01</em><strong>Look around</strong><span>Drag to turn, scroll to zoom in on the details.</span></li>
