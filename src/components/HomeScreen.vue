@@ -52,7 +52,14 @@ function play() {
 
 <style scoped>
 .button-row {
-  width: fit-content;
+  grid-auto-columns: auto;
+  width: max-content;
+}
+
+@media (min-width: 761px) {
+  .button-row > * {
+    min-width: 202px;
+  }
 }
 
 .atlas {
