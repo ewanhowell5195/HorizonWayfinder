@@ -39,7 +39,8 @@ const fragmentSource = `#version 300 es
     vec3 forward = vec3(sin(yaw) * cos(pitch), cos(yaw) * cos(pitch), sin(pitch));
     vec3 right = vec3(cos(yaw), -sin(yaw), 0.0);
     vec3 up = cross(right, forward);
-    vec3 dir = normalize(forward + right * ndc.x * tanHalf * aspect + up * ndc.y * tanHalf);
+    vec2 extent = tanHalf * vec2(max(aspect, 1.0), max(1.0 / aspect, 1.0));
+    vec3 dir = normalize(forward + right * ndc.x * extent.x + up * ndc.y * extent.y);
     vec2 uv = vec2(atan(dir.x, dir.y) / (2.0 * PI) + 0.5, 0.5 - asin(clamp(dir.z, -1.0, 1.0)) / PI);
     vec2 dx = dFdx(uv);
     vec2 dy = dFdy(uv);
@@ -318,7 +319,7 @@ export function createSphere(canvas, { onHeading } = {}) {
     if (!controls.pan) {
       return
     }
-    const step = 2 * Math.tan(view.fov * Math.PI / 360) / canvas.clientHeight
+    const step = 2 * Math.tan(view.fov * Math.PI / 360) / Math.min(canvas.clientWidth, canvas.clientHeight)
     const deltaYaw = -(current.x - previous.x) * step, deltaPitch = (current.y - previous.y) * step
     look(deltaYaw, deltaPitch)
     const time = performance.now()
