@@ -93,7 +93,32 @@ function reloadWebGL() {
   }
 }
 
+function hoverOnly() {
+  return {
+    postcssPlugin: "hover-only",
+    Rule(rule, { AtRule }) {
+      if (rule.parent.type === "atrule" && rule.parent.params === "(hover: hover)") {
+        return
+      }
+      const hover = rule.selectors.filter(selector => selector.includes(":hover"))
+      if (!hover.length) {
+        return
+      }
+      const media = new AtRule({ name: "media", params: "(hover: hover)" })
+      media.append(rule.clone({ selectors: hover }))
+      rule.after(media)
+      const rest = rule.selectors.filter(selector => !selector.includes(":hover"))
+      if (rest.length) {
+        rule.selectors = rest
+      } else {
+        rule.remove()
+      }
+    }
+  }
+}
+
 export default defineConfig({
   plugins: [reloadWebGL(), vue(), minifyJson(), pageStubs()],
+  css: { postcss: { plugins: [hoverOnly()] } },
   server: { host: "127.0.0.1", port: 9123, strictPort: true, proxy: { "/api": { target: "https://horizonwayfind.ing", changeOrigin: true } } }
 })
