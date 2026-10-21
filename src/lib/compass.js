@@ -4,7 +4,7 @@ const POINTS = [["N", 0], ["NE", 256], ["E", 512], ["SE", 768], ["S", 1024], ["S
 export function createCompass() {
   const element = document.createElement("div")
   element.className = "compass"
-  element.innerHTML = `<div class="compass-shadow"></div><div class="compass-marks"><div class="compass-bar"><div class="compass-ticks"></div>${POINTS.map(([text]) => `<span${text.length > 1 ? " class=\"diagonal\"" : ""}>${text}</span>`).join("")}</div><div class="compass-line"></div></div>`
+  element.innerHTML = `<div class="compass-shadow"></div><div class="compass-marks"><div class="compass-bar"><div class="compass-ticks"></div>${POINTS.map(([text]) => `<span>${text}</span>`).join("")}</div><div class="compass-line"></div></div>`
   const ticks = element.querySelector(".compass-ticks")
   const letters = Array.from(element.querySelectorAll(".compass-bar span"))
   let shown = null
