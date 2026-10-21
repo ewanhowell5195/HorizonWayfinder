@@ -4,7 +4,7 @@ import ArrowIcon from "./ArrowIcon.vue"
 import MenuScreen from "./MenuScreen.vue"
 
 defineProps({ visible: Boolean, groups: Array })
-const emit = defineEmits(["best"])
+const emit = defineEmits(["best", "replay"])
 
 function score(value) {
   return value === null ? "None" : value.toLocaleString()
@@ -25,6 +25,7 @@ function score(value) {
           <span role="columnheader">Last</span>
           <span role="columnheader">Average</span>
           <span role="columnheader">Games</span>
+          <span role="columnheader"><span class="hidden">Replay</span></span>
         </div>
         <div v-for="row in group.rows" :key="row.key" class="row" role="row">
           <span role="cell" class="area">{{ GAME_NAMES[row.games] }}<small v-if="row.time">{{ timeLabel(row.time) }}</small></span>
@@ -35,6 +36,7 @@ function score(value) {
           <span role="cell">{{ score(row.last) }}</span>
           <span role="cell">{{ score(row.average) }}</span>
           <span role="cell">{{ row.played }}</span>
+          <span role="cell" class="replay"><button class="text-button" type="button" :title="`Play ${group.name}, ${GAME_NAMES[row.games]}${row.time ? `, ${timeLabel(row.time)}` : ''} again`" @click="emit('replay', { mode: group.mode, games: row.games, time: row.time })">Replay<ArrowIcon /></button></span>
         </div>
       </div>
     </section>
@@ -54,7 +56,7 @@ h2 {
 
 .table {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) repeat(4, max-content);
+  grid-template-columns: minmax(0, 1fr) repeat(5, max-content);
   --column-gap: 28px;
 }
 
@@ -95,6 +97,33 @@ h2 {
 
 .head > :first-child {
   text-align: left;
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.replay button {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.replay svg {
+  width: 12px;
+  height: 12px;
+  transition: translate 0.25s ease;
+}
+
+.replay button:hover:not(:disabled) {
+  color: var(--accent);
+}
+
+.replay button:hover:not(:disabled) svg {
+  translate: 3px 0;
 }
 
 .best, .best button {

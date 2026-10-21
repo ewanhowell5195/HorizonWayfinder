@@ -548,6 +548,13 @@ function refreshScores() {
   breakdown.value = scoreBreakdown()
 }
 
+function replay({ mode: modeName, games: which, time }) {
+  setGames(which)
+  setMode(modeName)
+  setTimeLimit(time)
+  newGame()
+}
+
 function viewBest(key) {
   const saved = readJson(key)
   enter("game", `${screenUrl("game")}?seed=${saved.seed}&id=${saved.id}`)
@@ -1521,7 +1528,7 @@ onBeforeUnmount(() => {
   <HomeScreen :visible="homeShown" :count="pool.length" :found="found.size" :ready="canPlay" :best="overall.best" :last="overall.last" :average="overall.average" @play="goGames" @quick="quickStart" @scores="goTo('scores')" @atlas="goAtlas" @fold="bottom => homeFold = bottom" />
   <GamesScreen :visible="isMenu && !challenge && choosing && !(pickingAreas && phone)" back @back="goBack" :phone="phone" @customise="goTo('areas')" :ready="canPlay" :counts="counts" :location-counts="locationCounts" :available="choices.length" :games="games" :preview="previewGame" :lit="litAreas" :lit-tribes="litTribes" :tribe-areas="tribeAreas" :frames="tribeFrames" :tribes="availableTribes" :tribe-filter="tribeFilter" :tribe-counts="tribeCounts" :matched="chosenGames !== 'custom'" :custom-rules="customRules" :seed="seedInput" :seed-error="seedError" @games="setGames" @rule="setRule" @tribe-filter="setTribeFilter" @next="goTo('setup')" @seed="openChallenge" />
   <AreasScreen :visible="isMenu && !challenge && choosing && pickingAreas && phone" back @back="goBack" :ready="canPlay" :available="choices.length" :location-counts="locationCounts" :tribes="availableTribes" :tribe-filter="tribeFilter" :tribe-counts="tribeCounts" :matched="chosenGames !== 'custom'" :custom-rules="customRules" @rule="setRule" @tribe-filter="setTribeFilter" @next="goTo('setup')" />
-  <ScoresScreen :visible="isMenu && !challenge && scoresPage" back @back="goBack" :groups="breakdown" @best="viewBest" />
+  <ScoresScreen :visible="isMenu && !challenge && scoresPage" back @back="goBack" :groups="breakdown" @best="viewBest" @replay="replay" />
   <QuickScreen :visible="isMenu && !challenge && quick"back @back="goBack" :ready="canPlay" :scored="scored" :available="choices.length" :rounds="roundCount" :games="chosenGames" :mode="mode" :custom-rules="customRules" :time="timeLimit" @start="newGame" @change="changeQuick" />
   <SetupScreen :visible="isMenu && !challenge && setup && !(customising && phone)" back @back="goBack" :ready="canPlay" :scored="scored" :available="choices.length" :rounds="roundCount" :games="chosenGames" :mode="mode" :custom-rules="customRules" :best="best" :last="last" :average="average" :phone="phone" :time="timeLimit" @start="newGame" @mode="setMode" @rule="setRule" @time="setTimeLimit" @customise="goTo('customise')" />
   <CustomiseScreen :visible="isMenu && !challenge && setup && customising && phone" back @back="goBack" :ready="canPlay" :available="choices.length" :rounds="roundCount" :custom-rules="customRules" @start="newGame" @rule="setRule" />
