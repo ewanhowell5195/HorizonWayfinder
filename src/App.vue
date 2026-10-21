@@ -1107,13 +1107,13 @@ function viewableAnswer(index, number) {
   return element
 }
 
-function revealAnswer(current) {
+function revealAnswer(current, drop = true) {
   if (current.answered) {
     return
   }
   current.answered = true
   const answer = viewableAnswer(game.index)
-  answer.classList.add("drop-in")
+  answer.classList.toggle("drop-in", drop)
   resultMarkers.push(bigmap.value.addMarker(answer, current.entry.answer.x, current.entry.answer.y))
 }
 
@@ -1123,12 +1123,19 @@ function finishReveal(skipped) {
     return
   }
   stopReveal()
-  revealAnswer(current)
+  revealAnswer(current, !skipped)
   result.value.shown = current.entry.score
   result.value.docked = true
   bigmap.value.setLineProgress(1)
   if (skipped) {
-    bigmap.value.fit(current.points, current.room)
+    result.value.snapped = true
+    bigmap.value.fit(current.points, Object.assign({ snap: true, now: true }, current.room))
+  }
+}
+
+function skipReveal() {
+  if (game?.state === "result" && scoreReveal) {
+    finishReveal(true)
   }
 }
 
@@ -1371,6 +1378,8 @@ function onKey(event) {
 
 onMounted(async () => {
   window.addEventListener("keydown", onKey)
+  window.addEventListener("pointerdown", skipReveal, { capture: true })
+  window.addEventListener("wheel", skipReveal, { capture: true, passive: true })
   window.addEventListener("popstate", onHistory)
   window.addEventListener("pagehide", saveOnLeave)
   let sharedView = null
@@ -1508,6 +1517,8 @@ watch(previewGame, (value, old) => {
 
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", onKey)
+  window.removeEventListener("pointerdown", skipReveal, { capture: true })
+  window.removeEventListener("wheel", skipReveal, { capture: true })
   window.removeEventListener("popstate", onHistory)
   window.removeEventListener("pagehide", saveOnLeave)
 })
@@ -1538,7 +1549,7 @@ onBeforeUnmount(() => {
     <LoadingEmblem :key="loadingKey" />
   </div>
   <Transition name="card">
-    <ScoreReveal v-if="phase === `result` && result" ref="resultCard" :class="{ held: mapWaiting }" :key="result.key" :card="result.card" :score="result.shown" :distance="result.distance" :miss="result.miss" :last-round="result.lastRound" :docked="result.docked" :animate="result.animate" :viewing="Boolean(viewing)" @next="next" @view="viewResult" @back="leaveView" />
+    <ScoreReveal v-if="phase === `result` && result" ref="resultCard" :class="{ held: mapWaiting }" :key="result.key" :card="result.card" :score="result.shown" :distance="result.distance" :miss="result.miss" :last-round="result.lastRound" :docked="result.docked" :animate="result.animate" :snapped="Boolean(result.snapped)" :viewing="Boolean(viewing)" @next="next" @view="viewResult" @back="leaveView" />
   </Transition>
   <Transition name="card">
     <FinalResults v-if="phase === `summary` && summary && !viewing" ref="finalResults" :class="{ held: mapWaiting }" :results="summary.results" :total="summary.total" :max="summary.max" :mode="gameMode" :seed="summary.seed" :animate="summary.animate" @menu="goTo('home')" @again="newGame" @view="index => { summary.animate = false; openView({ round: index }) }" />

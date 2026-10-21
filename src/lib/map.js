@@ -2312,9 +2312,13 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
       lines.forEach(entry => entry.progress = progress)
       needsDraw = true
     },
-    fit(points, { snap = false, inset = 0, top = 0, left = 0, side = FIT_SIDE, margin = 1.2, start = null, game = null, hidden = 0, delay = 0, duration = FLIGHT_MS } = {}) {
+    fit(points, { snap = false, now = false, inset = 0, top = 0, left = 0, side = FIT_SIDE, margin = 1.2, start = null, game = null, hidden = 0, delay = 0, duration = FLIGHT_MS } = {}) {
       const box = points?.length ? { minX: Math.min(...points.map(p => p.x)), maxX: Math.max(...points.map(p => p.x)), minY: Math.min(...points.map(p => p.y)), maxY: Math.max(...points.map(p => p.y)) } : tileExtent(game)
       pendingFit = { box, snap, inset, top, left, side, margin, start, hidden, delay, duration }
+      if (now) {
+        fitBox(pendingFit)
+        pendingFit = null
+      }
       needsDraw = true
     },
     refresh() {

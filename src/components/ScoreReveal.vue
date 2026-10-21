@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from "vue"
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { loadCard } from "../lib/cauldrons.js"
 import SwapText from "./SwapText.vue"
 
@@ -15,7 +15,7 @@ const FIT_MARGIN = 40
 const CARD_MS = 61 * 33
 const HOLD_EARLY_MS = 60
 
-const props = defineProps({ card: String, score: Number, distance: String, miss: Boolean, lastRound: Boolean, docked: Boolean, animate: Boolean, viewing: Boolean })
+const props = defineProps({ card: String, score: Number, distance: String, miss: Boolean, lastRound: Boolean, docked: Boolean, animate: Boolean, snapped: Boolean, viewing: Boolean })
 const emit = defineEmits(["next", "view", "back"])
 const src = ref(null)
 const root = ref(null)
@@ -47,9 +47,16 @@ onMounted(async () => {
   new Image().src = still.value
   try {
     objectUrl = URL.createObjectURL(await loadCard(props.card))
-    src.value = objectUrl
+    src.value = props.snapped ? still.value : objectUrl
   } catch (error) {
     console.warn(error)
+    src.value = still.value
+  }
+})
+
+watch(() => props.snapped, snapped => {
+  if (snapped) {
+    clearTimeout(holdTimer)
     src.value = still.value
   }
 })
@@ -65,7 +72,7 @@ defineExpose({ insets })
 </script>
 
 <template>
-  <div ref="root" class="reveal" :class="{ docked, animate, reviewing: viewing }" :style="{ '--top': `${CARD_TOP}px` }">
+  <div ref="root" class="reveal" :class="{ docked, animate, snapped, reviewing: viewing }" :style="{ '--top': `${CARD_TOP}px` }">
     <div class="stage">
       <img v-if="src" :src="src" alt="" @load="played">
       <div class="band">
@@ -147,6 +154,18 @@ defineExpose({ insets })
 
 .reveal.animate .band {
   animation: band-in 0.3s ease 0.85s backwards;
+}
+
+.reveal.snapped .band {
+  animation: none;
+}
+
+.reveal.snapped .stage {
+  transition: opacity 0.3s ease;
+}
+
+.reveal.snapped.docked .actions {
+  transition: none;
 }
 
 .band strong {
