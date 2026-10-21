@@ -8,6 +8,14 @@ export function points(metres, game) {
   return metres <= PERFECT_METRES ? MAX_POINTS : Math.round(MAX_POINTS * Math.exp(-(metres - PERFECT_METRES) / FALLOFF_METRES[game]))
 }
 
+export function pluralWord(count, word) {
+  return count === 1 ? word : `${word}s`
+}
+
+export function plural(count, word) {
+  return `${count} ${pluralWord(count, word)}`
+}
+
 export function distanceLabel(entry) {
   return entry.miss || formatDistance(entry.metres)
 }

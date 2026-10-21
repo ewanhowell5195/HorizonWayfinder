@@ -1,5 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, reactive, ref, watch } from "vue"
+import { plural } from "../lib/game.js"
+import { useMedia } from "../lib/media.js"
 import { LOCATIONS } from "../lib/rules.js"
 import AreaRules from "./AreaRules.vue"
 import ArrowIcon from "./ArrowIcon.vue"
@@ -68,27 +70,17 @@ const placement = computed(() => {
   })
 })
 
-const wideQuery = matchMedia("(min-width: 1841px)")
-const wide = ref(wideQuery.matches)
-const updateWide = () => wide.value = wideQuery.matches
-wideQuery.addEventListener("change", updateWide)
+const wide = useMedia("(min-width: 1841px)")
 
-onBeforeUnmount(() => {
-  resize.disconnect()
-  wideQuery.removeEventListener("change", updateWide)
-})
+onBeforeUnmount(() => resize.disconnect())
 
 watch(() => props.seed, value => seedText.value = value || "")
 
-function plural(value) {
-  return `${value} location${value === 1 ? "" : "s"}`
-}
-
 function count(id) {
   if (id === "custom" && !custom.value) {
-    return `Up to ${plural(props.counts?.both || 0)}`
+    return `Up to ${plural(props.counts?.both || 0, "location")}`
   }
-  return plural(id === "custom" ? props.available || 0 : props.counts?.[id] || 0)
+  return plural(id === "custom" ? props.available || 0 : props.counts?.[id] || 0, "location")
 }
 
 function playSeed() {
@@ -110,7 +102,7 @@ function playSeed() {
             <i v-else :class="mark"></i>
           </template>
         </b>
-        <strong>{{ option.name }}</strong>
+        <strong class="caps">{{ option.name }}</strong>
         <span>{{ option.detail }}</span>
         <small>{{ count(option.id) }}</small>
       </button>
@@ -280,11 +272,7 @@ function playSeed() {
 }
 
 .pick strong {
-  font-family: var(--font-condensed);
-  font-weight: 400;
   font-size: 24px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text);
   transition: color 0.2s ease;
 }
@@ -300,10 +288,6 @@ function playSeed() {
   font-weight: 600;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-}
-
-.cta {
-  margin-top: clamp(18px, 3vh, 30px);
 }
 
 .seed {

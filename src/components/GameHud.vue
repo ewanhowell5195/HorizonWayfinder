@@ -64,7 +64,7 @@ onBeforeUnmount(() => {
     <Teleport to="#sphere-box" defer :disabled="!swapped">
       <HudCompass v-if="compass" ref="compassView" :heading="heading" :boxed="swapped" :faded="faded" :placement="placement" />
     </Teleport>
-    <div v-if="time !== null" class="round-timer" :class="[timerSpot, { low: time <= LOW_SECONDS }]" :style="timerTop !== null ? { top: `${timerTop}px` } : null" role="timer" aria-label="Time left"><span :key="time">{{ clock }}</span></div>
+    <div v-if="time !== null" class="round-timer caps" :class="[timerSpot, { low: time <= LOW_SECONDS }]" :style="timerTop !== null ? { top: `${timerTop}px` } : null" role="timer" aria-label="Time left"><span :key="time">{{ clock }}</span></div>
   </div>
 </template>
 
@@ -133,10 +133,8 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: center;
   translate: -50% 0;
-  font-family: var(--font-condensed);
   font-size: 24px;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.06em;
   --u: calc(100vh / 1080);
   filter: drop-shadow(0 0 calc(1.5 * var(--u)) rgba(0, 0, 0, 0.6)) drop-shadow(0 0 calc(1.5 * var(--u)) rgba(0, 0, 0, 0.6));
 }

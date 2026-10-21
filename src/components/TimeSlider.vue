@@ -13,7 +13,7 @@ const label = computed(() => timeLabel(props.seconds))
 <template>
   <div class="time">
     <input type="range" min="0" :max="TIME_LIMITS.length - 1" step="1" :value="index" :style="{ '--fill': fill }" :aria-valuetext="label" aria-label="Time per round" @input="event => emit('change', TIME_LIMITS[Number(event.target.value)])">
-    <strong :class="{ off: !seconds }">{{ label }}</strong>
+    <strong class="caps" :class="{ off: !seconds }">{{ label }}</strong>
   </div>
 </template>
 
@@ -77,11 +77,7 @@ strong {
   flex: none;
   width: 108px;
   white-space: nowrap;
-  font-family: var(--font-condensed);
-  font-weight: 400;
   font-size: 20px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 strong.off {

@@ -1,5 +1,6 @@
 <script setup>
 import { nextTick, ref, watch } from "vue"
+import { plural, pluralWord } from "../lib/game.js"
 import { LOCATIONS } from "../lib/rules.js"
 
 const props = defineProps({ customRules: Object, locationCounts: Object, tribes: Array, tribeFilter: Boolean, tribeCounts: Object, matched: Boolean })
@@ -34,26 +35,18 @@ function leaving(el) {
   el.style.top = `${el.offsetTop}px`
   el.style.width = `${el.offsetWidth}px`
 }
-
-function unit(value) {
-  return value === 1 ? "location" : "locations"
-}
-
-function plural(value) {
-  return `${value} ${unit(value)}`
-}
 </script>
 
 <template>
   <div>
     <div v-for="(row, n) in rows" :key="n" class="rules">
-      <button v-for="location in row" :key="location.id" class="choice rule" :class="{ on: customRules[location.id] }" type="button" role="switch" :aria-checked="customRules[location.id]" @click="emit('rule', location.id, !customRules[location.id])"><span class="switch"></span><strong>{{ location.name }}</strong><span>{{ plural(locationCounts?.[location.id] || 0) }}</span></button>
+      <button v-for="location in row" :key="location.id" class="choice rule" :class="{ on: customRules[location.id] }" type="button" role="switch" :aria-checked="customRules[location.id]" @click="emit('rule', location.id, !customRules[location.id])"><span class="switch"></span><strong>{{ location.name }}</strong><span>{{ plural(locationCounts?.[location.id] || 0, "location") }}</span></button>
     </div>
-    <button class="toggle" :class="{ on: tribeFilter }" type="button" role="switch" :aria-checked="tribeFilter" @click="emit('tribe-filter', !tribeFilter)"><span class="switch"></span>Filter by tribe</button>
+    <button class="toggle text-button" :class="{ on: tribeFilter }" type="button" role="switch" :aria-checked="tribeFilter" @click="emit('tribe-filter', !tribeFilter)"><span class="switch"></span>Filter by tribe</button>
     <div class="collapse" :class="{ open: tribeFilter }" :inert="!tribeFilter">
       <div class="collapse-inner">
         <TransitionGroup ref="tribeList" tag="div" name="tribe" class="rules tribes" @before-leave="leaving">
-          <button v-for="tribe in tribes" :key="tribe.id" class="choice rule" :class="{ on: customRules[tribe.id] }" type="button" role="switch" :aria-checked="customRules[tribe.id]" @click="emit('rule', tribe.id, !customRules[tribe.id])"><span class="switch"></span><strong>{{ tribe.name }}</strong><span>{{ tribeCounts?.[tribe.id] || 0 }}<span class="unit">{{ ` ${unit(tribeCounts?.[tribe.id] || 0)}` }}</span></span></button>
+          <button v-for="tribe in tribes" :key="tribe.id" class="choice rule" :class="{ on: customRules[tribe.id] }" type="button" role="switch" :aria-checked="customRules[tribe.id]" @click="emit('rule', tribe.id, !customRules[tribe.id])"><span class="switch"></span><strong>{{ tribe.name }}</strong><span>{{ tribeCounts?.[tribe.id] || 0 }}<span class="unit">{{ ` ${pluralWord(tribeCounts?.[tribe.id] || 0, "location")}` }}</span></span></button>
         </TransitionGroup>
       </div>
     </div>
@@ -98,19 +91,9 @@ function plural(value) {
 }
 
 .toggle {
-  display: flex;
-  align-items: center;
   gap: 12px;
   width: 100%;
   margin: 20px 0 0;
-  padding: 0;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: var(--muted);
-  background: none;
-  transition: color 0.2s ease;
 }
 
 .toggle::after {
@@ -127,9 +110,8 @@ function plural(value) {
   transform: none;
 }
 
-.toggle:hover, .toggle.on {
+.toggle.on {
   color: var(--text);
-  filter: none;
 }
 
 .tribes {

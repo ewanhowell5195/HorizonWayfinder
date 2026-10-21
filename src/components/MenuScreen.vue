@@ -95,7 +95,7 @@ onBeforeUnmount(() => observer?.disconnect())
         <slot name="top" />
       </header>
       <div ref="main" class="screen-main" :style="width ? { maxWidth: `${width}px` } : null">
-        <button v-if="back" class="back rise" type="button" @click="emit('back')"><ArrowIcon />Back</button>
+        <button v-if="back" class="back text-button rise" type="button" @click="emit('back')"><ArrowIcon />Back</button>
         <slot />
       </div>
       <slot name="bottom" />
@@ -106,19 +106,9 @@ onBeforeUnmount(() => observer?.disconnect())
 
 <style scoped>
 .back {
-  display: flex;
-  align-items: center;
   gap: 8px;
   width: fit-content;
   margin: 0 0 clamp(14px, 2.4vh, 24px);
-  padding: 0;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: var(--muted);
-  background: none;
-  transition: color 0.2s ease;
 }
 
 .back svg {
@@ -126,11 +116,6 @@ onBeforeUnmount(() => observer?.disconnect())
   height: 14px;
   transform: scaleX(-1);
   transition: translate 0.25s ease;
-}
-
-.back:hover {
-  color: var(--text);
-  filter: none;
 }
 
 .back:hover svg {

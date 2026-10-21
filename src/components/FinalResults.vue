@@ -143,8 +143,8 @@ defineExpose({ room })
           </button>
         </li>
       </ol>
-      <div class="extras" :class="{ open: revealed }" :inert="!revealed">
-        <div>
+      <div class="extras collapse" :class="{ open: revealed }" :inert="!revealed">
+        <div class="collapse-inner">
           <div class="share">
             <small class="label">Seed</small>
             <code :title="link">{{ seed }}</code>
@@ -367,20 +367,7 @@ defineExpose({ room })
 }
 
 .extras {
-  display: grid;
-  grid-template-rows: 0fr;
-  opacity: 0;
   transition: grid-template-rows 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
-}
-
-.extras.open {
-  grid-template-rows: 1fr;
-  opacity: 1;
-}
-
-.extras > div {
-  min-height: 0;
-  overflow: hidden;
 }
 
 .share {

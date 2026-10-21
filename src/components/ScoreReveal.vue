@@ -73,7 +73,7 @@ defineExpose({ insets })
         <span>{{ label }}</span>
       </div>
     </div>
-    <div class="actions button-row bright">
+    <div class="actions button-row bright halo">
       <button class="secondary" type="button" @click="emit(viewing ? 'back' : 'view')"><SwapText :text="viewing ? 'View map' : 'View photosphere'" /></button>
       <button type="button" @click="emit('next')"><SwapText :text="lastRound ? 'See results' : 'Next round'" /></button>
     </div>
@@ -176,17 +176,6 @@ defineExpose({ insets })
   visibility: hidden;
   transform: translate(-50%, 12px);
   transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s;
-}
-
-.actions::before {
-  content: "";
-  position: absolute;
-  inset: -70px;
-  z-index: -1;
-  background: black;
-  filter: blur(100px);
-  opacity: 0.5;
-  pointer-events: none;
 }
 
 .reveal.docked .actions {

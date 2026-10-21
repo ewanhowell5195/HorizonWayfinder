@@ -24,7 +24,7 @@ const modeRules = computed(() => MODE_RULES[props.mode] || {})
     <div class="group rise" style="--i: 3">
       <small class="label">Mode</small>
       <div class="options" role="radiogroup" aria-label="Mode">
-        <button v-for="option in MODES" :key="option.id" class="choice option" :class="{ selected: mode === option.id }" type="button" role="radio" :aria-checked="mode === option.id" @click="emit('mode', option.id)"><strong>{{ option.name }}</strong></button>
+        <button v-for="option in MODES" :key="option.id" class="choice option" :class="{ selected: mode === option.id }" type="button" role="radio" :aria-checked="mode === option.id" @click="emit('mode', option.id)"><strong class="caps">{{ option.name }}</strong></button>
       </div>
       <div class="collapse" :class="{ open: !custom }" :inert="custom">
         <div class="collapse-inner">
@@ -84,15 +84,7 @@ const modeRules = computed(() => MODE_RULES[props.mode] || {})
 }
 
 .option strong {
-  font-family: var(--font-condensed);
-  font-weight: 400;
   font-size: 20px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.unscored {
-  margin: clamp(18px, 3.2vh, 34px) 0 0;
 }
 
 .cta {

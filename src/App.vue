@@ -27,6 +27,7 @@ import { loadGuesses, loadScores, recordGuess, scoreColour } from "./lib/stats.j
 import { loadTribes, tribeAt } from "./lib/tribes.js"
 import { decodeScore, decodeSeed, encodeSeed, randomCode, seededRandom, seedLink } from "./lib/seed.js"
 import { pickView } from "./lib/view.js"
+import { useMedia } from "./lib/media.js"
 
 const COUNTDOWN = 3
 const SEPARATE_PIECE = "hfw-east"
@@ -81,8 +82,7 @@ const games = ref("both")
 const intro = ref(false)
 const setup = ref(false)
 const customising = ref(false)
-const phoneQuery = matchMedia("(max-width: 760px)")
-const phone = ref(phoneQuery.matches)
+const phone = useMedia("(max-width: 760px)")
 const choosing = ref(false)
 const pickingAreas = ref(false)
 const quick = ref(false)
@@ -438,10 +438,6 @@ function goBack() {
   } else {
     goTo(pickingAreas.value ? "games" : choosing.value && changing ? "quick" : "home")
   }
-}
-
-function updatePhone() {
-  phone.value = phoneQuery.matches
 }
 
 function customLocations(base) {
@@ -1310,7 +1306,6 @@ onMounted(async () => {
   window.addEventListener("keydown", onKey)
   window.addEventListener("popstate", onHistory)
   window.addEventListener("pagehide", saveOnLeave)
-  phoneQuery.addEventListener("change", updatePhone)
   let sharedView = null
   const resumable = screenFromPath() === "game" && savedGame(gameParams())
   if (resumable) {
@@ -1444,7 +1439,6 @@ onBeforeUnmount(() => {
   window.removeEventListener("keydown", onKey)
   window.removeEventListener("popstate", onHistory)
   window.removeEventListener("pagehide", saveOnLeave)
-  phoneQuery.removeEventListener("change", updatePhone)
 })
 </script>
 

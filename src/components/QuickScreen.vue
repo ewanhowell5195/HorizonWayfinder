@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from "vue"
-import { MAX_POINTS } from "../lib/game.js"
+import { MAX_POINTS, plural } from "../lib/game.js"
 import { GAME_NAMES, MODE_NAMES, MODE_RULES, timeLabel } from "../lib/rules.js"
 import ArrowIcon from "./ArrowIcon.vue"
 import MenuScreen from "./MenuScreen.vue"
@@ -10,7 +10,7 @@ const props = defineProps({ visible: Boolean, ready: Boolean, scored: Boolean, a
 const emit = defineEmits(["start", "change"])
 
 const modeRules = computed(() => props.mode === "custom" ? props.customRules : MODE_RULES[props.mode] || {})
-const locations = computed(() => `${props.available || 0} location${props.available === 1 ? "" : "s"}`)
+const locations = computed(() => plural(props.available || 0, "location"))
 const points = computed(() => `${props.rounds} rounds, up to ${(props.rounds * MAX_POINTS).toLocaleString()} points`)
 </script>
 
@@ -21,17 +21,17 @@ const points = computed(() => `${props.rounds} rounds, up to ${(props.rounds * M
     <div class="summary rise" style="--i: 3">
       <div class="item">
         <small class="label">Area</small>
-        <strong>{{ GAME_NAMES[games] }}</strong>
+        <strong class="caps">{{ GAME_NAMES[games] }}</strong>
         <span>{{ locations }}</span>
       </div>
       <div class="item">
         <small class="label">Mode</small>
-        <strong>{{ MODE_NAMES[mode] || "Custom" }}</strong>
+        <strong class="caps">{{ MODE_NAMES[mode] || "Custom" }}</strong>
         <span>{{ points }}</span>
       </div>
       <div class="item">
         <small class="label">Time</small>
-        <strong>{{ timeLabel(time) }}</strong>
+        <strong class="caps">{{ timeLabel(time) }}</strong>
         <span>{{ time ? "Per round" : "No time limit" }}</span>
       </div>
     </div>
@@ -57,11 +57,7 @@ const points = computed(() => `${props.rounds} rounds, up to ${(props.rounds * M
 }
 
 .item strong {
-  font-family: var(--font-condensed);
-  font-weight: 400;
   font-size: 24px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .item span {
@@ -76,10 +72,6 @@ const points = computed(() => `${props.rounds} rounds, up to ${(props.rounds * M
 .button-row {
   width: fit-content;
   margin-top: clamp(22px, 4vh, 40px);
-}
-
-.unscored {
-  margin: clamp(18px, 3.2vh, 34px) 0 0;
 }
 
 @media (max-width: 760px) {

@@ -17,9 +17,3 @@ const emit = defineEmits(["rule", "tribe-filter", "next"])
     </div>
   </MenuScreen>
 </template>
-
-<style scoped>
-.cta {
-  margin-top: clamp(18px, 3vh, 30px);
-}
-</style>

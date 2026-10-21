@@ -25,13 +25,13 @@ watch(() => props.selected, selected => {
       <nav class="atlas-tabs" role="tablist">
         <button v-for="option in tabs" :key="option.id" type="button" role="tab" :class="{ selected: tab === option.id }" :aria-selected="tab === option.id" @click="emit('tab', option.id)">{{ option.name }}</button>
       </nav>
-      <div class="atlas-extra" :class="{ open: tab === 'photospheres' }">
-        <div>
+      <div class="atlas-extra collapse" :class="{ open: tab === 'photospheres' }">
+        <div class="collapse-inner">
           <strong><i class="key" aria-hidden="true"></i>{{ found }} / {{ total }} found</strong>
         </div>
       </div>
-      <div class="atlas-extra" :class="{ open: devOpen }">
-        <div>
+      <div class="atlas-extra collapse" :class="{ open: devOpen }">
+        <div class="collapse-inner">
           <div v-if="shown" class="dev-info">
             <strong>{{ shown.title }}</strong>
             <code>{{ shown.name }}</code>
@@ -117,23 +117,6 @@ watch(() => props.selected, selected => {
 .atlas-tabs button.selected {
   color: var(--text);
   background: rgba(255, 255, 255, 0.12);
-}
-
-.atlas-extra {
-  display: grid;
-  grid-template-rows: 0fr;
-  opacity: 0;
-  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
-}
-
-.atlas-extra.open {
-  grid-template-rows: 1fr;
-  opacity: 1;
-}
-
-.atlas-extra > div {
-  min-height: 0;
-  overflow: hidden;
 }
 
 .atlas-extra strong {

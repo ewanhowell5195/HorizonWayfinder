@@ -62,7 +62,7 @@ defineExpose({
     <canvas ref="canvas"></canvas>
     <Teleport to="#home-credit" defer :disabled="!dock">
       <div class="credit" :class="{ hidden: !caption, docked: dock }">
-        <small>{{ label }}</small>
+        <small class="label">{{ label }}</small>
         <span>{{ game }}</span>
         <div :key="slide" class="timer" :class="{ running: cycling, hidden: !timer }" :style="timerStyle"></div>
       </div>
@@ -113,13 +113,6 @@ canvas {
 
 .credit.hidden {
   opacity: 0;
-}
-
-.credit small {
-  font-size: 11px;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: var(--muted);
 }
 
 .credit span {

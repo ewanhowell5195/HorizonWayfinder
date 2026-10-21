@@ -503,6 +503,31 @@ a.mark[href]:hover {
   color: var(--muted);
 }
 
+.text-button {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: none;
+  transition: color 0.2s ease;
+}
+
+.text-button:hover:not(:disabled) {
+  color: var(--text);
+  filter: none;
+}
+
+.caps {
+  font-family: var(--font-condensed);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .stat-row {
   display: flex;
   gap: 40px;
@@ -521,7 +546,12 @@ a.mark[href]:hover {
   letter-spacing: 0.04em;
 }
 
+.cta {
+  margin-top: clamp(18px, 3vh, 30px);
+}
+
 .unscored {
+  margin: clamp(18px, 3.2vh, 34px) 0 0;
   font-size: 13px;
   color: var(--muted);
 }
@@ -921,6 +951,17 @@ a.mark[href]:hover {
 
 .map-compass.shown {
   opacity: 1;
+}
+
+.halo::before {
+  content: "";
+  position: absolute;
+  inset: -70px;
+  z-index: -1;
+  background: black;
+  filter: blur(100px);
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .collapse {

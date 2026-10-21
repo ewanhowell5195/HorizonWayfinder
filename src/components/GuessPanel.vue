@@ -1,14 +1,11 @@
 <script setup>
-import { computed, onBeforeUnmount, ref } from "vue"
+import { computed } from "vue"
+import { useMedia } from "../lib/media.js"
 import SwapText from "./SwapText.vue"
 
 const props = defineProps({ hidden: Boolean, hasGuess: Boolean, swapped: Boolean })
 const emit = defineEmits(["guess", "swap"])
-const compactQuery = matchMedia("(hover: none), (max-width: 640px)")
-const compact = ref(compactQuery.matches)
-const updateCompact = () => compact.value = compactQuery.matches
-compactQuery.addEventListener("change", updateCompact)
-onBeforeUnmount(() => compactQuery.removeEventListener("change", updateCompact))
+const compact = useMedia("(hover: none), (max-width: 640px)")
 const swapTitle = computed(() => props.swapped ? "Swap back: photosphere full screen" : "Swap: map full screen")
 const guessLabel = computed(() => props.hasGuess ? "Guess" : "Place your guess")
 function guess() {
@@ -17,7 +14,7 @@ function guess() {
 </script>
 
 <template>
-  <div class="guess" :class="{ hidden, swapped }">
+  <div class="guess halo" :class="{ hidden, swapped }">
     <div class="map">
       <slot />
       <div id="sphere-box" class="sphere-box"></div>
@@ -45,17 +42,6 @@ function guess() {
   gap: var(--gap);
   width: 320px;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.5s;
-}
-
-.guess::before {
-  content: "";
-  position: absolute;
-  inset: -70px;
-  z-index: -1;
-  background: black;
-  filter: blur(100px);
-  opacity: 0.5;
-  pointer-events: none;
 }
 
 .guess::after {

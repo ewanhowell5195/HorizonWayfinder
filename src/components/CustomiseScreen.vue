@@ -16,13 +16,3 @@ const emit = defineEmits(["start", "rule"])
     <p class="unscored rise" style="--i: 5">Custom games are not scored, but you can still share them.</p>
   </MenuScreen>
 </template>
-
-<style scoped>
-.cta {
-  margin-top: clamp(18px, 3vh, 30px);
-}
-
-.unscored {
-  margin: clamp(18px, 3.2vh, 34px) 0 0;
-}
-</style>
