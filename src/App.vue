@@ -15,6 +15,7 @@ import GamesScreen from "./components/GamesScreen.vue"
 import AreasScreen from "./components/AreasScreen.vue"
 import SetupScreen from "./components/SetupScreen.vue"
 import QuickScreen from "./components/QuickScreen.vue"
+import ScoresScreen from "./components/ScoresScreen.vue"
 import CustomiseScreen from "./components/CustomiseScreen.vue"
 import FinalResults from "./components/FinalResults.vue"
 import { MAX_POINTS, ROUNDS, distanceLabel, formatDistance, points, readStore, shuffle, wait, writeStore } from "./lib/game.js"
@@ -22,12 +23,12 @@ import { cauldronFor, loadCard } from "./lib/cauldrons.js"
 import { answerMarker, devMarker, pin } from "./lib/markers.js"
 import { pointLocation } from "./lib/locations.js"
 import { decodePosition } from "./lib/position.js"
-import { LOCATIONS, MODE_RULES, TIME_LIMITS, TRIBES, fullRules, gamesOf, modeOf, offTribes, SHARED_TRIBES, tribeOn, tribeOrder, tribeRules, tribesOf, wholeGames, withGames } from "./lib/rules.js"
+import { LOCATIONS, MODE_NAMES, MODE_RULES, TIME_LIMITS, TRIBES, fullRules, gamesOf, modeOf, offTribes, SHARED_TRIBES, tribeOn, tribeOrder, tribeRules, tribesOf, wholeGames, withGames } from "./lib/rules.js"
 import { loadGuesses, loadScores, recordGuess, scoreColour } from "./lib/stats.js"
 import { loadTribes, tribeAt } from "./lib/tribes.js"
 import { decodeScore, decodeSeed, encodeSeed, randomCode, seededRandom, seedLink } from "./lib/seed.js"
-import { pickView } from "./lib/view.js"
 import { useMedia } from "./lib/media.js"
+import { pickView } from "./lib/view.js"
 
 const COUNTDOWN = 3
 const SEPARATE_PIECE = "hfw-east"
@@ -35,7 +36,7 @@ const SEPARATE_PIECE = "hfw-east"
 const QUIET_MS = 700
 const MAP_DELAY_MS = 1200
 const SWAP_FADE_MS = 200
-const SCREEN_PATHS = { home: "", games: "play", areas: "play", quick: "play", setup: "setup", customise: "setup", challenge: "challenge", game: "game", atlas: "map" }
+const SCREEN_PATHS = { home: "", scores: "", games: "play", areas: "play", quick: "play", setup: "setup", customise: "setup", challenge: "challenge", game: "game", atlas: "map" }
 const FOUND = "found"
 const RECENT = "recentRounds"
 const RECENT_GAMES = 2
@@ -86,6 +87,8 @@ const phone = useMedia("(max-width: 760px)")
 const choosing = ref(false)
 const pickingAreas = ref(false)
 const quick = ref(false)
+const scoresPage = ref(false)
+const breakdown = ref([])
 const atlas = ref(false)
 const found = ref(new Set(readJson(FOUND) || []))
 const bestGuesses = ref(readJson(BEST_GUESSES) || {})
@@ -129,7 +132,7 @@ const finalResults = ref(null)
 
 const isMenu = computed(() => phase.value === "menu")
 const isRound = computed(() => phase.value === "round")
-const homeShown = computed(() => !booting.value && isMenu.value && !challenge.value && !setup.value && !choosing.value && !atlas.value && !quick.value && !restoring.value)
+const homeShown = computed(() => !booting.value && isMenu.value && !challenge.value && !setup.value && !choosing.value && !atlas.value && !quick.value && !scoresPage.value && !restoring.value)
 const markShown = computed(() => !booting.value && (isMenu.value || isRound.value) && !restoring.value && !resuming.value && !viewing.value)
 const showsMap = computed(() => (phase.value === "result" || phase.value === "summary" || atlas.value) && !viewing.value)
 const devMode = ref(readStore("devMode") === "1")
@@ -484,6 +487,7 @@ function show(screen) {
   choosing.value = screen === "games" || screen === "areas"
   pickingAreas.value = screen === "areas"
   quick.value = screen === "quick"
+  scoresPage.value = screen === "scores"
   atlas.value = screen === "atlas"
 }
 
@@ -541,6 +545,20 @@ function refreshScores() {
   last.value = scored ? storedScore(scoreKey("lastScore")) : null
   average.value = scored ? averageScore() : null
   overall.value = overallScores()
+  breakdown.value = scoreBreakdown()
+}
+
+function scoreBreakdown() {
+  const order = Object.keys(GAME_SUFFIXES)
+  return ["easy", "normal", "hard"].map(modeName => ({
+    mode: modeName,
+    name: MODE_NAMES[modeName],
+    rows: COMBINATIONS.filter(([entryMode]) => entryMode === modeName).map(([, games, time]) => {
+      const key = name => scoreKey(name, modeName, games, time)
+      const played = storedScore(key("gamesPlayed")) || 0
+      return { key: key(""), games, time, played, best: storedScore(key("bestScore")), last: storedScore(key("lastScore")), average: played ? Math.round(storedScore(key("scoreSum")) / played) : null }
+    }).filter(row => row.played).sort((a, b) => order.indexOf(a.games) - order.indexOf(b.games) || a.time - b.time)
+  })).filter(group => group.rows.length)
 }
 
 function overallScores() {
@@ -853,6 +871,7 @@ async function restoreGame(saved) {
   setup.value = false
   choosing.value = false
   quick.value = false
+  scoresPage.value = false
   game = { rounds: saved.rounds, index: saved.index, total: saved.total, results: saved.results, state: saved.state, guess: null, rules: fullRules(saved.rules), games: saved.games, seed: saved.seed, id: saved.id, time: saved.time || 0, spent: saved.spent || 0 }
   gameRules.value = game.rules
   gameTime.value = game.time
@@ -1200,6 +1219,7 @@ function resumeGame() {
   setup.value = false
   choosing.value = false
   quick.value = false
+  scoresPage.value = false
   phase.value = paused.phase
   intro.value = introRunning
   paused = null
@@ -1228,6 +1248,7 @@ function begin(rounds, gameRulesValue, time = 0) {
   setup.value = false
   choosing.value = false
   quick.value = false
+  scoresPage.value = false
   gameRules.value = game.rules
   gameTime.value = game.time
   saveGame()
@@ -1279,7 +1300,7 @@ function onKey(event) {
     }
     return
   }
-  if (isMenu.value && !challenge.value && event.key === "Escape" && (setup.value || choosing.value || atlas.value || quick.value)) {
+  if (isMenu.value && !challenge.value && event.key === "Escape" && (setup.value || choosing.value || atlas.value || quick.value || scoresPage.value)) {
     goBack()
     return
   }
@@ -1330,6 +1351,7 @@ onMounted(async () => {
   choosing.value = history.state.screen === "games" || history.state.screen === "areas"
   pickingAreas.value = history.state.screen === "areas"
   quick.value = history.state.screen === "quick"
+  scoresPage.value = history.state.screen === "scores"
   atlas.value = history.state.screen === "atlas"
   booting.value = false
   poolLoading = loadPool()
@@ -1375,6 +1397,9 @@ const pageTitle = computed(() => {
   }
   if (quick.value) {
     return "Quick Start"
+  }
+  if (scoresPage.value) {
+    return "All Scores"
   }
   return null
 })
@@ -1482,10 +1507,11 @@ onBeforeUnmount(() => {
   <SlideBackdrop ref="backdrop" :active="((isMenu && !atlas) || intro) && !restoring && !booting" :timer="isMenu && !atlas && !restoring && !booting" :caption="!choosing" :dock="homeShown" />
   <AtlasScreen :visible="isMenu && atlas && !viewing" :ready="atlasReady" :found="foundRounds.length" :total="pool.length" :dev="devMode" :selected="devSelected" :tab="mapTab" @tab="setMapTab" @view="openView({ atlas: devSelected.name })" />
   <ChallengeScreen :visible="isMenu && Boolean(challenge) && !booting && !restoring" :ready="canPlay" :rules="challenge?.seed.rules" :games="challenge?.seed.games" :rounds="challenge?.seed.rounds.length || 0" :time="challenge?.seed.time || 0" :score="challenge?.score" :error="seedError" @play="playChallenge" />
-  <HomeScreen :visible="homeShown" :count="pool.length" :found="found.size" :ready="canPlay" :best="overall.best" :last="overall.last" :average="overall.average" @play="goGames" @quick="quickStart" @atlas="goAtlas" @fold="bottom => homeFold = bottom" />
+  <HomeScreen :visible="homeShown" :count="pool.length" :found="found.size" :ready="canPlay" :best="overall.best" :last="overall.last" :average="overall.average" @play="goGames" @quick="quickStart" @scores="goTo('scores')" @atlas="goAtlas" @fold="bottom => homeFold = bottom" />
   <GamesScreen :visible="isMenu && !challenge && choosing && !(pickingAreas && phone)" back @back="goBack" :phone="phone" @customise="goTo('areas')" :ready="canPlay" :counts="counts" :location-counts="locationCounts" :available="choices.length" :games="games" :preview="previewGame" :lit="litAreas" :lit-tribes="litTribes" :tribe-areas="tribeAreas" :frames="tribeFrames" :tribes="availableTribes" :tribe-filter="tribeFilter" :tribe-counts="tribeCounts" :matched="chosenGames !== 'custom'" :custom-rules="customRules" :seed="seedInput" :seed-error="seedError" @games="setGames" @rule="setRule" @tribe-filter="setTribeFilter" @next="goTo('setup')" @seed="openChallenge" />
   <AreasScreen :visible="isMenu && !challenge && choosing && pickingAreas && phone" back @back="goBack" :ready="canPlay" :available="choices.length" :location-counts="locationCounts" :tribes="availableTribes" :tribe-filter="tribeFilter" :tribe-counts="tribeCounts" :matched="chosenGames !== 'custom'" :custom-rules="customRules" @rule="setRule" @tribe-filter="setTribeFilter" @next="goTo('setup')" />
-  <QuickScreen :visible="isMenu && !challenge && quick" back @back="goBack" :ready="canPlay" :scored="scored" :available="choices.length" :rounds="roundCount" :games="chosenGames" :mode="mode" :custom-rules="customRules" :time="timeLimit" @start="newGame" @change="changeQuick" />
+  <ScoresScreen :visible="isMenu && !challenge && scoresPage" back @back="goBack" :groups="breakdown" />
+  <QuickScreen :visible="isMenu && !challenge && quick"back @back="goBack" :ready="canPlay" :scored="scored" :available="choices.length" :rounds="roundCount" :games="chosenGames" :mode="mode" :custom-rules="customRules" :time="timeLimit" @start="newGame" @change="changeQuick" />
   <SetupScreen :visible="isMenu && !challenge && setup && !(customising && phone)" back @back="goBack" :ready="canPlay" :scored="scored" :available="choices.length" :rounds="roundCount" :games="chosenGames" :mode="mode" :custom-rules="customRules" :best="best" :last="last" :average="average" :phone="phone" :time="timeLimit" @start="newGame" @mode="setMode" @rule="setRule" @time="setTimeLimit" @customise="goTo('customise')" />
   <CustomiseScreen :visible="isMenu && !challenge && setup && customising && phone" back @back="goBack" :ready="canPlay" :available="choices.length" :rounds="roundCount" :custom-rules="customRules" @start="newGame" @rule="setRule" />
   <RoundIntro :visible="intro" :number="status.index" :count="status.count" :progress="status.progress" :label="status.label" :tip="status.tip" :mode="gameMode" :time="gameTime" :countdown="status.countdown" :steps="COUNTDOWN" :waiting="status.waiting" :held="status.held" @begin="startHeld" />

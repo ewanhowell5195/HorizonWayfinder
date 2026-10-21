@@ -6,7 +6,8 @@ import MenuScreen from "./MenuScreen.vue"
 import SlapTitle from "./SlapTitle.vue"
 
 const props = defineProps({ visible: Boolean, count: Number, found: Number, ready: Boolean, best: Number, last: Number, average: Number })
-const emit = defineEmits(["play", "quick", "atlas", "fold"])
+const emit = defineEmits(["play", "quick", "atlas", "fold", "scores"])
+const played = computed(() => props.best !== null && props.best !== undefined)
 
 const countLabel = computed(() => props.count ? `${props.count} locations` : "")
 const bestLabel = computed(() => props.best ? props.best.toLocaleString() : "None yet")
@@ -37,10 +38,13 @@ function play() {
       <li><em>03</em><strong>Score</strong><span>Up to 5,000 points a round. Closer scores more.</span></li>
     </ol>
     <template #bottom>
-      <footer class="stat-row home-bottom rise" style="--i: 6">
-        <div class="stat-block"><small class="label">Best score</small><strong>{{ bestLabel }}</strong></div>
-        <div class="stat-block"><small class="label">Last game</small><strong>{{ lastLabel }}</strong></div>
-        <div class="stat-block"><small class="label">Average</small><strong>{{ averageLabel }}</strong></div>
+      <footer class="home-bottom rise" style="--i: 6">
+        <button class="stat-row scores-link" type="button" :disabled="!played" :title="played ? 'All scores' : null" @click="emit('scores')">
+          <span class="stat-block"><small class="label">Best score</small><strong>{{ bestLabel }}</strong></span>
+          <span class="stat-block"><small class="label">Last game</small><strong>{{ lastLabel }}</strong></span>
+          <span class="stat-block"><small class="label">Average</small><strong>{{ averageLabel }}</strong></span>
+          <ArrowIcon v-if="played" class="scores-arrow" />
+        </button>
       </footer>
       <div id="home-credit"></div>
     </template>
@@ -121,7 +125,46 @@ function play() {
 }
 
 .home-bottom {
+  display: flex;
   align-items: flex-end;
+}
+
+.scores-link {
+  align-items: flex-end;
+  padding: 0;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-align: left;
+  color: var(--text);
+  background: none;
+}
+
+.scores-link:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.scores-link .label {
+  transition: color 0.2s ease;
+}
+
+.scores-link:hover:not(:disabled) {
+  filter: none;
+}
+
+.scores-link:hover:not(:disabled) .label {
+  color: var(--text);
+}
+
+.scores-arrow {
+  align-self: center;
+  color: var(--muted);
+  transition: color 0.2s ease, translate 0.25s ease;
+}
+
+.scores-link:hover:not(:disabled) .scores-arrow {
+  color: var(--accent);
+  translate: 4px 0;
 }
 
 @media (max-height: 760px) and (min-width: 761px) {
