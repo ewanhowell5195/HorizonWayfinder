@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, reactive, ref, watch } from "vue"
 import { plural } from "../lib/game.js"
 import { useMedia } from "../lib/media.js"
 import { LOCATIONS } from "../lib/rules.js"
+import AreaPreview from "./AreaPreview.vue"
 import AreaRules from "./AreaRules.vue"
 import ArrowIcon from "./ArrowIcon.vue"
 import MenuScreen from "./MenuScreen.vue"
@@ -35,8 +36,8 @@ function observeMaps(element) {
   }
 }
 
-function measure(game, image) {
-  imageSizes[game] ??= [image.naturalWidth, image.naturalHeight]
+function measure(game, size) {
+  imageSizes[game] ??= size
 }
 
 function mapRect(game) {
@@ -127,13 +128,7 @@ function playSeed() {
         <div :key="maps.join()" :ref="observeMaps" class="maps" :class="{ cramped: mapsBox.width < 200 }" aria-hidden="true">
           <div class="map-row" :class="{ placed: placement }">
             <div v-for="(game, n) in maps" :key="game" class="map" :style="placement?.[n]">
-              <div class="glow">
-                <template v-for="area in areas[game]" :key="area">
-                  <img v-for="tribe in tribeAreas?.[game]?.[area]" :key="tribe" class="tribe" :class="{ off: !lit?.includes(area) || !litTribes?.includes(tribe) }" :style="{ '--mask': `url(/map/tribes/${game}-${tribe}.webp)` }" :src="`/backgrounds/area-${area}.avif`" alt="">
-                  <img v-if="!tribeAreas" :class="{ off: !lit?.includes(area) }" :src="`/backgrounds/area-${area}.avif`" alt="">
-                </template>
-              </div>
-              <img v-for="area in areas[game]" :key="area" class="area dim" :src="`/backgrounds/area-${area}.avif`" alt="" @load="event => measure(game, event.target)">
+              <AreaPreview :game="game" :areas="areas[game]" :lit="lit" :lit-tribes="litTribes" :tribe-areas="tribeAreas?.[game] || null" @size="size => measure(game, size)" />
             </div>
           </div>
         </div>
@@ -177,33 +172,6 @@ function playSeed() {
   flex: 1 1 0;
   min-width: 0;
   min-height: 0;
-}
-
-.glow {
-  position: absolute;
-  inset: 0;
-  filter: drop-shadow(0 0 2px var(--accent)) drop-shadow(0 0 10px var(--accent));
-}
-
-.map img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  transition: opacity 0.3s ease;
-}
-
-.glow img.off {
-  opacity: 0;
-}
-
-.glow img.tribe {
-  mask: var(--mask) center / contain no-repeat luminance;
-}
-
-.area.dim {
-  opacity: 0.3;
 }
 
 .maps-enter-active, .maps-leave-active {

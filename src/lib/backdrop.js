@@ -10,6 +10,8 @@ const PORTRAIT_FOG_REACH = 0.105
 const FOG_MARGIN = 160
 const FOG_EASE = 6
 const DARK_MS = 250
+const KEEP_SLIDES = 4
+const MEASURE_MS = 100
 // must match CLOSE_UPS in tools/game/build_map_previews.py
 const MAP_CLOSE_UPS = 8
 
@@ -155,6 +157,13 @@ export async function createBackdrop(canvas, { onSlide, onFog, fogTop, fogRight 
   let fogPortrait = null
   let queued = null
   let destroyed = false
+  let measured = -Infinity
+  let measuredPortrait = null
+  let measuredSize = 0
+  let anchor = null
+  let screenSize = [canvas.clientWidth, canvas.clientHeight]
+  const sizer = new ResizeObserver(([entry]) => screenSize = [entry.contentRect.width, entry.contentRect.height])
+  sizer.observe(canvas)
 
   function hatchTexture() {
     return texture(hatchImage || new ImageData(new Uint8ClampedArray([128, 128, 128, 255]), 1, 1), gl.REPEAT)
@@ -192,14 +201,34 @@ export async function createBackdrop(canvas, { onSlide, onFog, fogTop, fogRight 
   }
 
   function load(entry) {
-    if (!cache.has(entry.file)) {
-      cache.set(entry.file, bitmap(`/backgrounds/${entry.file}.avif`).then(image => {
-        const slide = { texture: texture(image, gl.CLAMP_TO_EDGE), aspect: image.width / image.height }
-        image.close()
-        return slide
-      }))
+    const cached = cache.get(entry.file)
+    if (cached) {
+      cache.delete(entry.file)
+      cache.set(entry.file, cached)
+      return cached
     }
-    return cache.get(entry.file)
+    const loading = bitmap(`/backgrounds/${entry.file}.avif`).then(image => {
+      const slide = { texture: texture(image, gl.CLAMP_TO_EDGE), aspect: image.width / image.height }
+      image.close()
+      return slide
+    })
+    loading.slide = null
+    loading.then(slide => loading.slide = slide)
+    cache.set(entry.file, loading)
+    return loading
+  }
+
+  function evict() {
+    const used = new Set(layers.map(layer => layer.texture))
+    for (const [file, loading] of cache) {
+      if (cache.size <= KEEP_SLIDES) {
+        return
+      }
+      if (loading.slide && !used.has(loading.slide.texture) && file !== queued?.file) {
+        gl.deleteTexture(loading.slide.texture)
+        cache.delete(file)
+      }
+    }
   }
 
   async function show(entry, instant = false) {
@@ -212,6 +241,7 @@ export async function createBackdrop(canvas, { onSlide, onFog, fogTop, fogRight 
     const now = performance.now()
     const layer = { texture: slide.texture, aspect: slide.aspect, start: now, shown: instant ? now - FADE_MS : now, drift: Math.random() < 0.5 ? 0 : 1, focused: Boolean(entry.focused) }
     layers = instant ? [layer] : layers.concat(layer)
+    evict()
     onSlide?.(entry)
   }
 
@@ -238,7 +268,7 @@ export async function createBackdrop(canvas, { onSlide, onFog, fogTop, fogRight 
 
   function draw(now) {
     const ratio = Math.min(window.devicePixelRatio || 1, 2)
-    const screenWidth = canvas.clientWidth, screenHeight = canvas.clientHeight
+    const [screenWidth, screenHeight] = screenSize
     const width = Math.round(screenWidth * ratio)
     const height = Math.round(screenHeight * ratio)
     if (!width || !height) {
@@ -250,13 +280,17 @@ export async function createBackdrop(canvas, { onSlide, onFog, fogTop, fogRight 
     }
     const portrait = screenWidth < 760
     const band = portrait ? screenHeight * 0.5 : 900
+    if (now - measured > MEASURE_MS || measuredPortrait !== portrait || measuredSize !== screenWidth * 10000 + screenHeight) {
+      measured = now
+      measuredPortrait = portrait
+      measuredSize = screenWidth * 10000 + screenHeight
+      anchor = portrait ? fogTop?.() : fogRight?.()
+    }
     let target
     if (portrait) {
-      const top = fogTop?.()
-      target = top === undefined || top === null ? screenHeight * PORTRAIT_FOG + band * 0.3 : screenHeight - top + PORTRAIT_FOG_MARGIN + band * PORTRAIT_FOG_REACH
+      target = anchor === undefined || anchor === null ? screenHeight * PORTRAIT_FOG + band * 0.3 : screenHeight - anchor + PORTRAIT_FOG_MARGIN + band * PORTRAIT_FOG_REACH
     } else {
-      const right = fogRight?.()
-      target = right === undefined || right === null ? Math.min(Math.max(screenWidth * 0.52, 940), screenWidth * 0.72) : Math.max(screenWidth / 2, right + FOG_MARGIN)
+      target = anchor === undefined || anchor === null ? Math.min(Math.max(screenWidth * 0.52, 940), screenWidth * 0.72) : Math.max(screenWidth / 2, anchor + FOG_MARGIN)
     }
     fogMiddle = fogMiddle === null || fogPortrait !== portrait ? target : fogMiddle + (target - fogMiddle) * Math.min(1, (now - lastDraw) / 1000 * FOG_EASE)
     fogPortrait = portrait
@@ -296,6 +330,7 @@ export async function createBackdrop(canvas, { onSlide, onFog, fogTop, fogRight 
   return {
     destroy() {
       destroyed = true
+      sizer.disconnect()
       clearInterval(cycle)
       gl.getExtension("WEBGL_lose_context")?.loseContext()
     },

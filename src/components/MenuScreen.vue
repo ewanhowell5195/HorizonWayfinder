@@ -88,7 +88,7 @@ onBeforeUnmount(() => observer?.disconnect())
 </script>
 
 <template>
-  <section ref="section" class="screen" :class="{ visible, compact, scrolls: $slots.after }" :style="{ '--fade': fade, '--scrolled': `${scrolledPx}px` }" @scroll="scrolled">
+  <section ref="section" class="screen" :class="{ visible, compact, scrolls: $slots.after, faded: fade > 0 }" :style="{ '--fade': fade, '--scrolled': `${scrolledPx}px` }" @scroll="scrolled">
     <div ref="fold" class="screen-fold">
       <header class="screen-top">
         <span class="mark mark-slot" aria-hidden="true"><i class="mark-emblem"></i>Horizon Wayfinder</span>

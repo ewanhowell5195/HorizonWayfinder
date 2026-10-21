@@ -402,7 +402,6 @@ a.mark[href]:hover {
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, calc(1 - var(--fade, 0))) 56px, #000 96px);
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.5s ease, visibility 0s linear 0.5s;
@@ -410,6 +409,10 @@ a.mark[href]:hover {
 
 .screen-fold {
   display: contents;
+}
+
+.screen.faded {
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, calc(1 - var(--fade, 0))) 56px, #000 96px);
 }
 
 .screen.scrolls {
@@ -426,6 +429,9 @@ a.mark[href]:hover {
   grid-template-rows: auto 1fr auto;
   row-gap: 24px;
   min-height: 100%;
+}
+
+.screen.scrolls.faded > .screen-fold {
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, calc(1 - var(--fade, 0))) calc(var(--scrolled, 0px) + 56px - var(--screen-top)), #000 calc(var(--scrolled, 0px) + 96px - var(--screen-top)));
 }
 

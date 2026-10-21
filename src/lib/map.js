@@ -348,7 +348,9 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
   let lastTile = null
   let flight = null
   let zoomAnchor = null
-  const viewSize = { width: 0, height: 0 }
+  const viewSize = { width: canvas.clientWidth, height: canvas.clientHeight }
+  const sizer = new ResizeObserver(([entry]) => Object.assign(viewSize, { width: entry.contentRect.width, height: entry.contentRect.height }))
+  sizer.observe(canvas)
 
   function initGL() {
     program = createProgram(vertexSource, fragmentSource)
@@ -1023,8 +1025,6 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
 
   function resize() {
     const ratio = Math.min(window.devicePixelRatio || 1, 2)
-    viewSize.width = canvas.clientWidth
-    viewSize.height = canvas.clientHeight
     const width = Math.round(viewSize.width * ratio)
     const height = Math.round(viewSize.height * ratio)
     if (width !== canvas.width || height !== canvas.height) {
@@ -2270,6 +2270,7 @@ export async function createMap(container, { root, onPick, onHover, onView, pois
   return {
     destroy() {
       destroyed = true
+      sizer.disconnect()
       teardown.abort()
       gl.getExtension("WEBGL_lose_context")?.loseContext()
     },

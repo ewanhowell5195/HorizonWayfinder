@@ -64,6 +64,9 @@ export function createSphere(canvas, { onHeading } = {}) {
   }
 
   const view = { yaw: 0, pitch: 0, fov: 75 }
+  let viewSize = [canvas.clientWidth, canvas.clientHeight]
+  const sizer = new ResizeObserver(([entry]) => viewSize = [entry.contentRect.width, entry.contentRect.height])
+  sizer.observe(canvas)
   const anisotropy = gl.getExtension("EXT_texture_filter_anisotropic")
   let texture = null
   let needsDraw = true
@@ -216,9 +219,9 @@ export function createSphere(canvas, { onHeading } = {}) {
   }
 
   function resize() {
-    const scale = window.devicePixelRatio || 1
-    const width = Math.round(canvas.clientWidth * scale)
-    const height = Math.round(canvas.clientHeight * scale)
+    const scale = Math.min(window.devicePixelRatio || 1, 2)
+    const width = Math.round(viewSize[0] * scale)
+    const height = Math.round(viewSize[1] * scale)
     if (canvas.width !== width || canvas.height !== height) {
       canvas.width = width
       canvas.height = height
@@ -257,7 +260,7 @@ export function createSphere(canvas, { onHeading } = {}) {
     gl.bindTexture(gl.TEXTURE_2D, hatch)
     gl.uniform1i(uniforms.hatch, 1)
     gl.uniform1i(uniforms.hasHatch, hatch ? 1 : 0)
-    gl.uniform1f(uniforms.hatchSize, HATCH_SCREEN_PX * canvas.width / Math.max(canvas.clientWidth, 1))
+    gl.uniform1f(uniforms.hatchSize, HATCH_SCREEN_PX * canvas.width / Math.max(viewSize[0], 1))
     gl.drawArrays(gl.TRIANGLES, 0, 3)
     onHeading?.(((view.yaw * 180 / Math.PI) % 360 + 360) % 360, view)
     needsDraw = reveal < 1
@@ -319,7 +322,7 @@ export function createSphere(canvas, { onHeading } = {}) {
     if (!controls.pan) {
       return
     }
-    const step = 2 * Math.tan(view.fov * Math.PI / 360) / Math.min(canvas.clientWidth, canvas.clientHeight)
+    const step = 2 * Math.tan(view.fov * Math.PI / 360) / Math.max(Math.min(viewSize[0], viewSize[1]), 1)
     const deltaYaw = -(current.x - previous.x) * step, deltaPitch = (current.y - previous.y) * step
     look(deltaYaw, deltaPitch)
     const time = performance.now()
@@ -382,6 +385,7 @@ export function createSphere(canvas, { onHeading } = {}) {
   return {
     destroy() {
       destroyed = true
+      sizer.disconnect()
       teardown.abort()
       gl.getExtension("WEBGL_lose_context")?.loseContext()
     },
