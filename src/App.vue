@@ -548,6 +548,12 @@ function refreshScores() {
   breakdown.value = scoreBreakdown()
 }
 
+function viewBest(key) {
+  const saved = readJson(key)
+  enter("game", `${screenUrl("game")}?seed=${saved.seed}&id=${saved.id}`)
+  restoreGame(saved)
+}
+
 function scoreBreakdown() {
   const order = Object.keys(GAME_SUFFIXES)
   return ["easy", "normal", "hard"].map(modeName => ({
@@ -556,7 +562,7 @@ function scoreBreakdown() {
     rows: COMBINATIONS.filter(([entryMode]) => entryMode === modeName).map(([, games, time]) => {
       const key = name => scoreKey(name, modeName, games, time)
       const played = storedScore(key("gamesPlayed")) || 0
-      return { key: key(""), games, time, played, best: storedScore(key("bestScore")), last: storedScore(key("lastScore")), average: played ? Math.round(storedScore(key("scoreSum")) / played) : null }
+      return { key: key(""), games, time, played, bestGame: readStore(key("bestGame")) ? key("bestGame") : null, best: storedScore(key("bestScore")), last: storedScore(key("lastScore")), average: played ? Math.round(storedScore(key("scoreSum")) / played) : null }
     }).filter(row => row.played).sort((a, b) => order.indexOf(a.games) - order.indexOf(b.games) || a.time - b.time)
   })).filter(group => group.rows.length)
 }
@@ -831,22 +837,26 @@ function removeGuess() {
   saveGame()
 }
 
+function gameSnapshot() {
+  return {
+    id: game.id,
+    seed: game.seed,
+    rules: game.rules,
+    games: game.games,
+    index: game.index,
+    total: game.total,
+    state: game.state,
+    results: game.results,
+    guess: game.guess && { x: game.guess.x, y: game.guess.y },
+    time: game.time,
+    spent: clockSpent(),
+    rounds: game.rounds.map(({ name, game: which, x, y, z, code }) => ({ name, game: which, x, y, z, code }))
+  }
+}
+
 function saveGame() {
   try {
-    sessionStorage.setItem(SAVED_GAME, JSON.stringify({
-      id: game.id,
-      seed: game.seed,
-      rules: game.rules,
-      games: game.games,
-      index: game.index,
-      total: game.total,
-      state: game.state,
-      results: game.results,
-      guess: game.guess && { x: game.guess.x, y: game.guess.y },
-      time: game.time,
-      spent: clockSpent(),
-      rounds: game.rounds.map(({ name, game: which, x, y, z, code }) => ({ name, game: which, x, y, z, code }))
-    }))
+    sessionStorage.setItem(SAVED_GAME, JSON.stringify(gameSnapshot()))
   } catch {}
 }
 
@@ -1122,8 +1132,9 @@ async function showSummary(record = true) {
     const key = name => scoreKey(name, modeOf(game.rules), game.games, game.time)
     writeStore(key("lastScore"), game.total)
     writeStore("lastScoreOverall", game.total)
-    if (game.total > (storedScore(key("bestScore")) || 0)) {
+    if (game.total > (storedScore(key("bestScore")) || 0) || !readStore(key("bestGame"))) {
       writeStore(key("bestScore"), game.total)
+      writeStore(key("bestGame"), JSON.stringify(gameSnapshot()))
     }
     writeStore(key("gamesPlayed"), (storedScore(key("gamesPlayed")) || 0) + 1)
     writeStore(key("scoreSum"), (storedScore(key("scoreSum")) || 0) + game.total)
@@ -1510,7 +1521,7 @@ onBeforeUnmount(() => {
   <HomeScreen :visible="homeShown" :count="pool.length" :found="found.size" :ready="canPlay" :best="overall.best" :last="overall.last" :average="overall.average" @play="goGames" @quick="quickStart" @scores="goTo('scores')" @atlas="goAtlas" @fold="bottom => homeFold = bottom" />
   <GamesScreen :visible="isMenu && !challenge && choosing && !(pickingAreas && phone)" back @back="goBack" :phone="phone" @customise="goTo('areas')" :ready="canPlay" :counts="counts" :location-counts="locationCounts" :available="choices.length" :games="games" :preview="previewGame" :lit="litAreas" :lit-tribes="litTribes" :tribe-areas="tribeAreas" :frames="tribeFrames" :tribes="availableTribes" :tribe-filter="tribeFilter" :tribe-counts="tribeCounts" :matched="chosenGames !== 'custom'" :custom-rules="customRules" :seed="seedInput" :seed-error="seedError" @games="setGames" @rule="setRule" @tribe-filter="setTribeFilter" @next="goTo('setup')" @seed="openChallenge" />
   <AreasScreen :visible="isMenu && !challenge && choosing && pickingAreas && phone" back @back="goBack" :ready="canPlay" :available="choices.length" :location-counts="locationCounts" :tribes="availableTribes" :tribe-filter="tribeFilter" :tribe-counts="tribeCounts" :matched="chosenGames !== 'custom'" :custom-rules="customRules" @rule="setRule" @tribe-filter="setTribeFilter" @next="goTo('setup')" />
-  <ScoresScreen :visible="isMenu && !challenge && scoresPage" back @back="goBack" :groups="breakdown" />
+  <ScoresScreen :visible="isMenu && !challenge && scoresPage" back @back="goBack" :groups="breakdown" @best="viewBest" />
   <QuickScreen :visible="isMenu && !challenge && quick"back @back="goBack" :ready="canPlay" :scored="scored" :available="choices.length" :rounds="roundCount" :games="chosenGames" :mode="mode" :custom-rules="customRules" :time="timeLimit" @start="newGame" @change="changeQuick" />
   <SetupScreen :visible="isMenu && !challenge && setup && !(customising && phone)" back @back="goBack" :ready="canPlay" :scored="scored" :available="choices.length" :rounds="roundCount" :games="chosenGames" :mode="mode" :custom-rules="customRules" :best="best" :last="last" :average="average" :phone="phone" :time="timeLimit" @start="newGame" @mode="setMode" @rule="setRule" @time="setTimeLimit" @customise="goTo('customise')" />
   <CustomiseScreen :visible="isMenu && !challenge && setup && customising && phone" back @back="goBack" :ready="canPlay" :available="choices.length" :rounds="roundCount" :custom-rules="customRules" @start="newGame" @rule="setRule" />

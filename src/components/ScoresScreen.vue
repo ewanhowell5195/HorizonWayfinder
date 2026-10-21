@@ -1,8 +1,10 @@
 <script setup>
 import { GAME_NAMES, timeLabel } from "../lib/rules.js"
+import ArrowIcon from "./ArrowIcon.vue"
 import MenuScreen from "./MenuScreen.vue"
 
 defineProps({ visible: Boolean, groups: Array })
+const emit = defineEmits(["best"])
 
 function score(value) {
   return value === null ? "None" : value.toLocaleString()
@@ -26,7 +28,10 @@ function score(value) {
         </div>
         <div v-for="row in group.rows" :key="row.key" class="row" role="row">
           <span role="cell" class="area">{{ GAME_NAMES[row.games] }}<small v-if="row.time">{{ timeLabel(row.time) }}</small></span>
-          <strong role="cell" class="best">{{ score(row.best) }}</strong>
+          <span role="cell" class="best">
+            <button v-if="row.bestGame" class="text-button" type="button" title="See this game's results" @click="emit('best', row.bestGame)">{{ score(row.best) }}<ArrowIcon /></button>
+            <strong v-else>{{ score(row.best) }}</strong>
+          </span>
           <span role="cell">{{ score(row.last) }}</span>
           <span role="cell">{{ score(row.average) }}</span>
           <span role="cell">{{ row.played }}</span>
@@ -92,8 +97,31 @@ h2 {
   text-align: left;
 }
 
-.best {
+.best, .best button {
+  font-weight: 600;
   color: var(--accent);
+}
+
+.best button {
+  display: inline-flex;
+  gap: 6px;
+  font-size: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.best svg {
+  width: 12px;
+  height: 12px;
+  transition: translate 0.25s ease;
+}
+
+.best button:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.best button:hover:not(:disabled) svg {
+  translate: 3px 0;
 }
 
 @media (max-width: 760px) {
