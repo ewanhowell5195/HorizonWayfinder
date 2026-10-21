@@ -236,7 +236,7 @@ export function createSphere(canvas, { onHeading, onFrame, maxPitch = Math.PI / 
   function layout() {
     const tanHalf = Math.tan(view.fov * Math.PI / 360)
     const aspect = viewSize[0] / Math.max(viewSize[1], 1)
-    const engaged = !controls.pan && !controls.zoom && (aspect < 1 || aspect > WIDE_LIMIT)
+    const engaged = !controls.pan && !controls.zoom && (aspect < FRAME_ASPECT || aspect > WIDE_LIMIT)
     const rect = [0, 0, canvas.width, canvas.height]
     if (!engaged) {
       return { engaged, rect, extent: [tanHalf * Math.max(aspect, 1), tanHalf * Math.max(1 / aspect, 1)], slack: [0, 0] }
@@ -246,7 +246,7 @@ export function createSphere(canvas, { onHeading, onFrame, maxPitch = Math.PI / 
       const height = Math.min(canvas.height, Math.round(canvas.width / FRAME_ASPECT))
       return { engaged, rect: [Math.round((canvas.width - width) / 2), Math.round((canvas.height - height) / 2), width, height], extent: [tanHalf * FRAME_ASPECT, tanHalf], slack: [0, 0] }
     }
-    const extent = aspect > 1 ? [tanHalf * FRAME_ASPECT, tanHalf * FRAME_ASPECT / aspect] : [tanHalf * aspect, tanHalf]
+    const extent = aspect > FRAME_ASPECT ? [tanHalf * FRAME_ASPECT, tanHalf * FRAME_ASPECT / aspect] : [tanHalf * aspect, tanHalf]
     return { engaged, rect, extent, slack: [Math.atan(tanHalf * FRAME_ASPECT) - Math.atan(extent[0]), Math.atan(tanHalf) - Math.atan(extent[1])] }
   }
 
