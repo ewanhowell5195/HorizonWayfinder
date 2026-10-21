@@ -288,7 +288,7 @@ function setMapTab(tab) {
 
 function applyMapTab() {
   const map = atlasMap.value && mapTab.value === "map"
-  bigmap.value?.setFeatures({ modes: map, readouts: map, compass: map, icons: map, instant: !atlasMap.value })
+  bigmap.value?.setFeatures({ modes: map || !atlasMap.value, readouts: map, compass: map, icons: map, instant: !atlasMap.value })
   bigmap.value?.setIconZoom(map)
 }
 
@@ -775,6 +775,7 @@ async function startRound(countdown = true, resumed = false) {
     minimap.value.setFeatures({ modes: current.rules.map3d, readouts: current.rules.readouts, compass: current.rules.compass, icons: current.rules.icons })
     showLocations(current)
     minimap.value.setMode(false, true)
+    bigmap.value.setMode(false, true)
     minimap.value.fit(null, { snap: true, game: current.games === "both" ? null : current.games, side: MINIMAP_PAD, margin: MINIMAP_MARGIN })
   })
   backdrop.value.cycle(false)
