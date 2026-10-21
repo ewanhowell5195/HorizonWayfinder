@@ -3,7 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { MODE_NAMES } from "../lib/rules.js"
 import HudCompass from "./HudCompass.vue"
 
-const props = defineProps({ round: Number, count: Number, score: Number, heading: Number, hidden: Boolean, viewing: Boolean, mode: String, compass: Boolean, swapped: Boolean, faded: Boolean, time: { type: Number, default: null } })
+const props = defineProps({ round: Number, count: Number, score: Number, heading: Number, hidden: Boolean, viewing: Boolean, clear: Boolean, mode: String, compass: Boolean, swapped: Boolean, faded: Boolean, time: { type: Number, default: null } })
 
 const LOW_SECONDS = 10
 const emblem = computed(() => `/rounds/${(props.round - 1) % 5 + 1}.webp`)
@@ -56,7 +56,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="hud" :class="{ hidden: hidden && !viewing, 'compass-only': viewing }">
+  <div class="hud" :class="{ hidden: hidden && !viewing, 'compass-only': viewing, clear }">
     <div ref="stats" class="stats">
       <img class="emblem" :src="emblem" alt="">
       <div class="stat"><span>Round</span><strong>{{ round }} / {{ count }}</strong></div>
@@ -64,7 +64,7 @@ onBeforeUnmount(() => {
       <div v-if="mode !== 'normal'" class="stat"><span>Mode</span><strong class="mode">{{ MODE_NAMES[mode] }}</strong></div>
     </div>
     <Teleport to="#sphere-box" defer :disabled="!swapped">
-      <HudCompass v-if="showsCompass" ref="compassView" :heading="heading" :boxed="swapped" :faded="faded" :placement="placement" />
+      <HudCompass v-if="showsCompass" ref="compassView" :heading="heading" :boxed="swapped" :faded="faded" :placement="placement" :raised="clear" />
     </Teleport>
     <div v-if="time !== null" class="round-timer caps" :class="[timerSpot, { low: time <= LOW_SECONDS }]" :style="timerTop !== null ? { top: `${timerTop}px` } : null" role="timer" aria-label="Time left"><span :key="time">{{ clock }}</span></div>
   </div>
@@ -97,6 +97,14 @@ onBeforeUnmount(() => {
 
 .hud.compass-only .stats, .hud.compass-only .round-timer {
   visibility: hidden;
+}
+
+.hud::before, .stats, .round-timer {
+  transition: opacity 0.3s ease;
+}
+
+.hud.clear::before, .hud.clear .stats, .hud.clear .round-timer {
+  opacity: 0;
 }
 
 .stats {

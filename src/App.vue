@@ -107,6 +107,7 @@ const average = ref(null)
 const overall = ref(null)
 const heading = ref(0)
 const holding = ref(false)
+const clearView = computed(() => holding.value && !swapView.value)
 const framed = ref(false)
 const bars = ref(readStore("bars") === "true")
 const barsTitle = computed(() => bars.value ? "Fill the screen" : "Show black bars")
@@ -1517,13 +1518,13 @@ onBeforeUnmount(() => {
     <PhotoSphere ref="sphere" :active="sphereActive" :boxed="swapView" :faded="swapFading" @heading="setHeading" @hold="value => holding = value" @frame="value => framed = value" />
   </Teleport>
   <div id="map-full" class="map-full" :class="{ shown: swapView }"></div>
-  <GameHud :time="timeLeft" :round="status.index" :count="status.count" :score="status.total" :heading="heading" :hidden="!isRound" :viewing="Boolean(viewing && !viewing.loading)" :mode="gameMode" :compass="gameRules.compass" :swapped="swapView" :faded="swapFading" />
-  <GuessPanel :hidden="!isRound" :held="holding && !swapView" :has-guess="hasGuess" :swapped="swapView" @guess="submitGuess" @swap="toggleSwap">
+  <GameHud :time="timeLeft" :round="status.index" :count="status.count" :score="status.total" :heading="heading" :hidden="!isRound" :viewing="Boolean(viewing && !viewing.loading)" :clear="clearView" :mode="gameMode" :compass="gameRules.compass" :swapped="swapView" :faded="swapFading" />
+  <GuessPanel :hidden="!isRound" :held="clearView" :has-guess="hasGuess" :swapped="swapView" @guess="submitGuess" @swap="toggleSwap">
     <Teleport to="#map-full" defer :disabled="!swapView">
       <MapView ref="minimap" pickable pois scale modes :faded="swapFading" @pick="placeGuess" />
     </Teleport>
   </GuessPanel>
-  <button class="icon-button bars-toggle" :class="{ shown: isRound && framed && !swapView }" type="button" :title="barsTitle" :aria-label="barsTitle" @click="toggleBars">
+  <button class="icon-button bars-toggle" :class="{ shown: isRound && framed && !swapView, 'out-of-view': clearView }" type="button" :title="barsTitle" :aria-label="barsTitle" @click="toggleBars">
     <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter">
       <path v-if="bars" d="M1.5 5.5v-3h3M11.5 2.5h3v3M14.5 10.5v3h-3M4.5 13.5h-3v-3" />
       <path v-else d="M1.5 2.5h13v11h-13zM1.5 5.5h13M1.5 10.5h13" />
@@ -1552,7 +1553,7 @@ onBeforeUnmount(() => {
       <button class="secondary" type="button" @click="leaveView">{{ atlas ? "Back to the map" : "Back to results" }}</button>
     </div>
   </Transition>
-  <div ref="menuMark" class="menu-mark" :class="{ shown: markShown, stacked: isRound && phone, over: isRound }" :style="{ translate: homeShown && markPush ? `0 ${markPush}px` : null }">
+  <div ref="menuMark" class="menu-mark" :class="{ shown: markShown, stacked: isRound && phone, over: isRound, 'out-of-view': clearView }" :style="{ translate: homeShown && markPush ? `0 ${markPush}px` : null }">
     <a class="mark" :href="homeShown ? null : '/'" :title="homeShown ? null : 'Main menu'" @click.exact="markClick"><i class="mark-emblem"></i><span class="mark-text">Horizon Wayfinder</span></a>
   </div>
   <SlideBackdrop ref="backdrop" :active="((isMenu && !atlas) || intro) && !restoring && !booting" :timer="isMenu && !atlas && !restoring && !booting" :caption="!choosing" :dock="homeShown" />
@@ -1684,6 +1685,11 @@ onBeforeUnmount(() => {
   opacity: 1;
   visibility: visible;
   transition: opacity 0.3s ease;
+}
+
+.bars-toggle.shown.out-of-view {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .bars-toggle:hover {

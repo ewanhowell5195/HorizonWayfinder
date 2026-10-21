@@ -374,6 +374,15 @@ a.mark[href]:hover {
   pointer-events: auto;
 }
 
+.menu-mark.shown.out-of-view {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.menu-mark.out-of-view .mark {
+  pointer-events: none;
+}
+
 .menu-mark.over .mark {
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
 }
