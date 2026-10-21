@@ -170,6 +170,7 @@ const gameMode = computed(() => modeOf(gameRules.value))
 let game = null
 let world = null
 let tribeMaps = null
+let viewRanges = {}
 let guessMarker = null
 let scoreReveal = null
 let resultMarkers = []
@@ -639,6 +640,7 @@ async function loadPool() {
     const response = await fetch("/photospheres/photospheres.json", { cache: "no-store" })
     if (response.ok) {
       world ??= await (await fetch("/map/world.json")).json()
+      viewRanges = await (await fetch("/photospheres/views.json", { cache: "no-store" })).json()
       tribeMaps ??= await loadTribes().catch(error => {
         console.warn(error)
         return {}
@@ -670,7 +672,7 @@ function prepare(round, current) {
     return
   }
   if (!round.view) {
-    round.view = pickView(round.bitmap, seededRandom(round.code))
+    round.view = pickView(viewRanges[round.name], seededRandom(round.code))
   }
   round.prepared = { texture: sphere.value.upload(round.bitmap), view: round.view }
   round.bitmap = null

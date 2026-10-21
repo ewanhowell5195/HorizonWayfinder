@@ -55,7 +55,7 @@ const fragmentSource = `#version 300 es
     }
   }`
 
-export function createSphere(canvas, { onHeading } = {}) {
+export function createSphere(canvas, { onHeading, maxPitch = Math.PI / 2 - 0.001 } = {}) {
   const gl = canvas.getContext("webgl2", { antialias: false })
   const teardown = new AbortController()
   let destroyed = false
@@ -271,9 +271,8 @@ export function createSphere(canvas, { onHeading } = {}) {
   }
 
   function look(deltaYaw, deltaPitch) {
-    const limit = Math.PI / 2 - 0.001
     view.yaw += deltaYaw
-    view.pitch = Math.max(-limit, Math.min(limit, view.pitch + deltaPitch))
+    view.pitch = Math.max(-maxPitch, Math.min(maxPitch, view.pitch + deltaPitch))
     needsDraw = true
   }
 
