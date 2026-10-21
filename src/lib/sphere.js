@@ -11,6 +11,8 @@ const REVEAL_SECONDS = 1.2
 const HATCH_SCREEN_PX = 600
 const REVEAL_BAND = 0.5
 const LOW_MEMORY = (navigator.deviceMemory ?? 8) <= 4 || matchMedia("(pointer: coarse)").matches
+const FRAME_ASPECT = 16 / 9
+const WIDE_LIMIT = 2.1
 
 const vertexSource = `#version 300 es
   in vec2 position;
@@ -22,9 +24,10 @@ const fragmentSource = `#version 300 es
   precision highp float;
   uniform sampler2D panorama;
   uniform vec2 resolution;
+  uniform vec2 origin;
   uniform float yaw;
   uniform float pitch;
-  uniform float tanHalf;
+  uniform vec2 extent;
   uniform float reveal;
   uniform sampler2D hatch;
   uniform float hatchSize;
@@ -34,12 +37,10 @@ const fragmentSource = `#version 300 es
   ${NOISE_REVEAL_GLSL}
 
   void main() {
-    vec2 ndc = gl_FragCoord.xy / resolution * 2.0 - 1.0;
-    float aspect = resolution.x / resolution.y;
+    vec2 ndc = (gl_FragCoord.xy - origin) / resolution * 2.0 - 1.0;
     vec3 forward = vec3(sin(yaw) * cos(pitch), cos(yaw) * cos(pitch), sin(pitch));
     vec3 right = vec3(cos(yaw), -sin(yaw), 0.0);
     vec3 up = cross(right, forward);
-    vec2 extent = tanHalf * vec2(max(aspect, 1.0), max(1.0 / aspect, 1.0));
     vec3 dir = normalize(forward + right * ndc.x * extent.x + up * ndc.y * extent.y);
     vec2 uv = vec2(atan(dir.x, dir.y) / (2.0 * PI) + 0.5, 0.5 - asin(clamp(dir.z, -1.0, 1.0)) / PI);
     vec2 dx = dFdx(uv);
@@ -55,7 +56,7 @@ const fragmentSource = `#version 300 es
     }
   }`
 
-export function createSphere(canvas, { onHeading, maxPitch = Math.PI / 2 - 0.001 } = {}) {
+export function createSphere(canvas, { onHeading, onFrame, maxPitch = Math.PI / 2 - 0.001 } = {}) {
   const gl = canvas.getContext("webgl2", { antialias: false })
   const teardown = new AbortController()
   let destroyed = false
@@ -74,6 +75,9 @@ export function createSphere(canvas, { onHeading, maxPitch = Math.PI / 2 - 0.001
   let revealed = null
   let active = true
   let controls = { pan: true, zoom: true }
+  let bars = false
+  let framed = false
+  let base = { yaw: 0, pitch: 0 }
   let spin = { yaw: 0, pitch: 0 }
   let lastMove = 0
   let lastFrame = performance.now()
@@ -103,7 +107,7 @@ export function createSphere(canvas, { onHeading, maxPitch = Math.PI / 2 - 0.001
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
       throw new Error(gl.getProgramInfoLog(program))
     }
-    uniforms = Object.fromEntries(["panorama", "resolution", "yaw", "pitch", "tanHalf", "reveal", "hatch", "hatchSize", "hasHatch"].map(name => [name, gl.getUniformLocation(program, name)]))
+    uniforms = Object.fromEntries(["panorama", "resolution", "origin", "yaw", "pitch", "extent", "reveal", "hatch", "hatchSize", "hasHatch"].map(name => [name, gl.getUniformLocation(program, name)]))
     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer())
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
     const positionLocation = gl.getAttribLocation(program, "position")
@@ -229,6 +233,37 @@ export function createSphere(canvas, { onHeading, maxPitch = Math.PI / 2 - 0.001
     }
   }
 
+  function layout() {
+    const tanHalf = Math.tan(view.fov * Math.PI / 360)
+    const aspect = viewSize[0] / Math.max(viewSize[1], 1)
+    const engaged = !controls.pan && !controls.zoom && (aspect < 1 || aspect > WIDE_LIMIT)
+    const rect = [0, 0, canvas.width, canvas.height]
+    if (!engaged) {
+      return { engaged, rect, extent: [tanHalf * Math.max(aspect, 1), tanHalf * Math.max(1 / aspect, 1)], slack: [0, 0] }
+    }
+    if (bars) {
+      const width = Math.min(canvas.width, Math.round(canvas.height * FRAME_ASPECT))
+      const height = Math.min(canvas.height, Math.round(canvas.width / FRAME_ASPECT))
+      return { engaged, rect: [Math.round((canvas.width - width) / 2), Math.round((canvas.height - height) / 2), width, height], extent: [tanHalf * FRAME_ASPECT, tanHalf], slack: [0, 0] }
+    }
+    const extent = aspect > 1 ? [tanHalf * FRAME_ASPECT, tanHalf * FRAME_ASPECT / aspect] : [tanHalf * aspect, tanHalf]
+    return { engaged, rect, extent, slack: [Math.atan(tanHalf * FRAME_ASPECT) - Math.atan(extent[0]), Math.atan(tanHalf) - Math.atan(extent[1])] }
+  }
+
+  function canPan() {
+    return controls.pan || layout().slack.some(value => value > 0)
+  }
+
+  function keepInFrame([yawSlack, pitchSlack]) {
+    const yaw = Math.max(base.yaw - yawSlack, Math.min(base.yaw + yawSlack, view.yaw))
+    const pitch = Math.max(base.pitch - pitchSlack, Math.min(base.pitch + pitchSlack, view.pitch))
+    if (yaw !== view.yaw || pitch !== view.pitch) {
+      view.yaw = yaw
+      view.pitch = pitch
+      needsDraw = true
+    }
+  }
+
   function draw(now) {
     if (destroyed) {
       return
@@ -242,18 +277,35 @@ export function createSphere(canvas, { onHeading, maxPitch = Math.PI / 2 - 0.001
       spin = Math.hypot(spin.yaw, spin.pitch) * decay < SPIN_STOP ? { yaw: 0, pitch: 0 } : { yaw: spin.yaw * decay, pitch: spin.pitch * decay }
     }
     resize()
+    const frame = layout()
+    if (frame.engaged !== framed) {
+      framed = frame.engaged
+      needsDraw = true
+      onFrame?.(framed)
+    }
+    const movable = !controls.pan && frame.slack.some(value => value > 0)
+    if (movable !== canvas.classList.contains("slack")) {
+      canvas.classList.toggle("slack", movable)
+    }
+    if (!controls.pan) {
+      keepInFrame(frame.slack)
+    }
     if (contextLost || !needsDraw || !texture || !canvas.width) {
       return
     }
-    gl.viewport(0, 0, canvas.width, canvas.height)
+    const [x, y, width, height] = frame.rect
+    gl.clearColor(0, 0, 0, 1)
+    gl.clear(gl.COLOR_BUFFER_BIT)
+    gl.viewport(x, y, width, height)
     gl.useProgram(program)
     gl.activeTexture(gl.TEXTURE0)
     gl.bindTexture(gl.TEXTURE_2D, texture)
     gl.uniform1i(uniforms.panorama, 0)
-    gl.uniform2f(uniforms.resolution, canvas.width, canvas.height)
+    gl.uniform2f(uniforms.resolution, width, height)
+    gl.uniform2f(uniforms.origin, x, y)
     gl.uniform1f(uniforms.yaw, view.yaw)
     gl.uniform1f(uniforms.pitch, view.pitch)
-    gl.uniform1f(uniforms.tanHalf, Math.tan(view.fov * Math.PI / 360))
+    gl.uniform2f(uniforms.extent, frame.extent[0], frame.extent[1])
     const reveal = 1 - (1 - Math.min((now - revealStart) / 1000 / REVEAL_SECONDS, 1)) ** 2
     gl.uniform1f(uniforms.reveal, reveal)
     gl.activeTexture(gl.TEXTURE1)
@@ -273,6 +325,9 @@ export function createSphere(canvas, { onHeading, maxPitch = Math.PI / 2 - 0.001
   function look(deltaYaw, deltaPitch) {
     view.yaw += deltaYaw
     view.pitch = Math.max(-maxPitch, Math.min(maxPitch, view.pitch + deltaPitch))
+    if (!controls.pan) {
+      keepInFrame(layout().slack)
+    }
     needsDraw = true
   }
 
@@ -290,14 +345,15 @@ export function createSphere(canvas, { onHeading, maxPitch = Math.PI / 2 - 0.001
   }
 
   canvas.addEventListener("pointerdown", event => {
-    if (!controls.pan && !controls.zoom) {
+    const panning = canPan()
+    if (!panning && !controls.zoom) {
       return
     }
     canvas.setPointerCapture(event.pointerId)
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
     spin = { yaw: 0, pitch: 0 }
     lastMove = performance.now()
-    canvas.classList.toggle("dragging", controls.pan)
+    canvas.classList.toggle("dragging", panning)
     if (pointers.size === 2) {
       pinchDistance = pinchSpan()
     }
@@ -318,10 +374,10 @@ export function createSphere(canvas, { onHeading, maxPitch = Math.PI / 2 - 0.001
       pinchDistance = span
       return
     }
-    if (!controls.pan) {
+    if (!canPan()) {
       return
     }
-    const step = 2 * Math.tan(view.fov * Math.PI / 360) / Math.max(Math.min(viewSize[0], viewSize[1]), 1)
+    const step = 2 * layout().extent[1] / Math.max(viewSize[1], 1)
     const deltaYaw = -(current.x - previous.x) * step, deltaPitch = (current.y - previous.y) * step
     look(deltaYaw, deltaPitch)
     const time = performance.now()
@@ -364,13 +420,14 @@ export function createSphere(canvas, { onHeading, maxPitch = Math.PI / 2 - 0.001
       return
     }
     const step = 2 * Math.PI / 180
-    if (controls.pan && event.key === "ArrowLeft") {
+    const panning = canPan()
+    if (panning && event.key === "ArrowLeft") {
       look(-step, 0)
-    } else if (controls.pan && event.key === "ArrowRight") {
+    } else if (panning && event.key === "ArrowRight") {
       look(step, 0)
-    } else if (controls.pan && event.key === "ArrowUp") {
+    } else if (panning && event.key === "ArrowUp") {
       look(0, step)
-    } else if (controls.pan && event.key === "ArrowDown") {
+    } else if (panning && event.key === "ArrowDown") {
       look(0, -step)
     } else if (controls.zoom && (event.key === "+" || event.key === "=")) {
       zoom(0.9)
@@ -403,6 +460,7 @@ export function createSphere(canvas, { onHeading, maxPitch = Math.PI / 2 - 0.001
       view.yaw = yaw
       view.pitch = pitch
       view.fov = 75
+      base = { yaw, pitch }
       spin = { yaw: 0, pitch: 0 }
       revealStart = performance.now()
       needsDraw = true
@@ -421,6 +479,11 @@ export function createSphere(canvas, { onHeading, maxPitch = Math.PI / 2 - 0.001
       pointers.clear()
       canvas.classList.remove("dragging")
       canvas.classList.toggle("locked", !pan)
+      needsDraw = true
+    },
+    setBars(value) {
+      bars = value
+      needsDraw = true
     }
   }
 }

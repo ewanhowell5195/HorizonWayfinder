@@ -107,6 +107,9 @@ const average = ref(null)
 const overall = ref(null)
 const heading = ref(0)
 const holding = ref(false)
+const framed = ref(false)
+const bars = ref(readStore("bars") === "true")
+const barsTitle = computed(() => bars.value ? "Fill the screen" : "Show black bars")
 const hasGuess = ref(false)
 const status = reactive({ index: 1, count: ROUNDS, total: 0, progress: 0, label: "", tip: "", countdown: COUNTDOWN, waiting: false, held: false })
 const result = ref(null)
@@ -824,6 +827,7 @@ async function startRound(countdown = true, resumed = false) {
   presentedRound = current.index
   presentedAtlas = null
   sphere.value.setControls({ pan: current.rules.pan, zoom: current.rules.zoom })
+  sphere.value.setBars(bars.value)
   round.prepared = null
   round.image = null
   introRunning = false
@@ -1316,6 +1320,12 @@ async function playSeed(input) {
   begin(seed.rounds.map(round => Object.assign({}, byName.get(round.name), { code: round.code })), seed.rules, seed.time)
 }
 
+function toggleBars() {
+  bars.value = !bars.value
+  writeStore("bars", String(bars.value))
+  sphere.value.setBars(bars.value)
+}
+
 async function toggleSwap() {
   if (swapFading.value) {
     return
@@ -1504,7 +1514,7 @@ onBeforeUnmount(() => {
 
 <template>
   <Teleport to="#sphere-box" defer :disabled="!swapView">
-    <PhotoSphere ref="sphere" :active="sphereActive" :boxed="swapView" :faded="swapFading" @heading="setHeading" @hold="value => holding = value" />
+    <PhotoSphere ref="sphere" :active="sphereActive" :boxed="swapView" :faded="swapFading" @heading="setHeading" @hold="value => holding = value" @frame="value => framed = value" />
   </Teleport>
   <div id="map-full" class="map-full" :class="{ shown: swapView }"></div>
   <GameHud :time="timeLeft" :round="status.index" :count="status.count" :score="status.total" :heading="heading" :hidden="!isRound" :viewing="Boolean(viewing && !viewing.loading)" :mode="gameMode" :compass="gameRules.compass" :swapped="swapView" :faded="swapFading" />
@@ -1513,6 +1523,12 @@ onBeforeUnmount(() => {
       <MapView ref="minimap" pickable pois scale modes :faded="swapFading" @pick="placeGuess" />
     </Teleport>
   </GuessPanel>
+  <button class="icon-button bars-toggle" :class="{ shown: isRound && framed && !swapView }" type="button" :title="barsTitle" :aria-label="barsTitle" @click="toggleBars">
+    <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter">
+      <path v-if="bars" d="M1.5 5.5v-3h3M11.5 2.5h3v3M14.5 10.5v3h-3M4.5 13.5h-3v-3" />
+      <path v-else d="M1.5 2.5h13v11h-13zM1.5 5.5h13M1.5 10.5h13" />
+    </svg>
+  </button>
   <div class="bigmap" :class="{ shown: showsMap, covered: intro, waiting: (atlas && !atlasReady) || mapWaiting, atlas: atlasMap }">
     <MapView ref="bigmap" pois scale modes />
     <LoadingEmblem :key="loadingKey" class="map-loading" />
@@ -1652,6 +1668,32 @@ onBeforeUnmount(() => {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
+}
+
+.bars-toggle {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  color: var(--text);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+}
+
+.bars-toggle.shown {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s ease;
+}
+
+.bars-toggle:hover {
+  color: var(--accent);
+}
+
+@media (hover: none), (max-width: 640px) {
+  .bars-toggle {
+    bottom: 76px;
+  }
 }
 
 .view-loading {

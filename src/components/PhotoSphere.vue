@@ -3,7 +3,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { createSphere } from "../lib/sphere.js"
 
 const props = defineProps({ active: Boolean, boxed: Boolean, faded: Boolean })
-const emit = defineEmits(["heading", "hold"])
+const emit = defineEmits(["heading", "hold", "frame"])
 const canvas = ref(null)
 const HOLD_MS = 1000
 const pressed = new Set()
@@ -32,7 +32,7 @@ function releaseAll() {
 }
 
 onMounted(() => {
-  sphere = createSphere(canvas.value, { onHeading: heading => emit("heading", heading) })
+  sphere = createSphere(canvas.value, { onHeading: heading => emit("heading", heading), onFrame: framed => emit("frame", framed) })
   sphere.setActive(props.active)
   canvas.value.addEventListener("pointerdown", press)
   addEventListener("pointerup", release)
@@ -55,7 +55,8 @@ defineExpose({
   upload: image => sphere.upload(image),
   present: (texture, yaw, pitch) => sphere.present(texture, yaw, pitch),
   discard: texture => sphere.discard(texture),
-  setControls: controls => sphere.setControls(controls)
+  setControls: controls => sphere.setControls(controls),
+  setBars: bars => sphere.setBars(bars)
 })
 </script>
 
@@ -89,5 +90,13 @@ defineExpose({
 
 .sphere.locked {
   cursor: default;
+}
+
+.sphere.locked.slack {
+  cursor: grab;
+}
+
+.sphere.locked.slack.dragging {
+  cursor: grabbing;
 }
 </style>
