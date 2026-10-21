@@ -1052,7 +1052,7 @@ async function showResult(entry, animate = false) {
   const room = resultCard.value?.insets() || {}
   const start = { x: points[0].x, y: points[0].y, zoom: 14 }
   if (!animate) {
-    resultMarkers.push(bigmap.value.addMarker(answerMarker(), entry.answer.x, entry.answer.y))
+    resultMarkers.push(bigmap.value.addMarker(viewableAnswer(game.index), entry.answer.x, entry.answer.y))
     bigmap.value.fit(points, Object.assign({ start }, room))
     return
   }
@@ -1085,12 +1085,25 @@ function playReveal(entry, points, room) {
   current.frame = requestAnimationFrame(tick)
 }
 
+function viewableAnswer(index, number) {
+  const element = answerMarker(number)
+  element.classList.add("viewable")
+  element.title = "View photosphere"
+  element.querySelector(".dot").addEventListener("click", () => {
+    if (summary.value) {
+      summary.value.animate = false
+    }
+    openView({ round: index })
+  })
+  return element
+}
+
 function revealAnswer(current) {
   if (current.answered) {
     return
   }
   current.answered = true
-  const answer = answerMarker()
+  const answer = viewableAnswer(game.index)
   answer.classList.add("drop-in")
   resultMarkers.push(bigmap.value.addMarker(answer, current.entry.answer.x, current.entry.answer.y))
 }
@@ -1123,7 +1136,7 @@ async function showSummary(record = true) {
   clearMarkers()
   const last = game.results.length - 1
   game.results.forEach((entry, n) => {
-    const guess = pin(), answer = answerMarker(n + 1)
+    const guess = pin(), answer = viewableAnswer(n, n + 1)
     if (n < last) {
       guess.classList.add("fade-in")
       answer.classList.add("fade-in")

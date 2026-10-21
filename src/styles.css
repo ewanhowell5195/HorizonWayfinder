@@ -830,14 +830,14 @@ a.mark[href]:hover {
   }
 }
 
-.marker.atlas .dot {
+.marker.atlas .dot, .marker.viewable .dot {
   pointer-events: auto;
   cursor: pointer;
   user-select: none;
   transition: transform 0.15s ease;
 }
 
-.marker.atlas .dot:hover {
+.marker.atlas .dot:hover, .marker.viewable .dot:hover {
   transform: scale(1.25);
 }
 
