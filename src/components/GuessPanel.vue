@@ -3,7 +3,7 @@ import { computed } from "vue"
 import { useMedia } from "../lib/media.js"
 import SwapText from "./SwapText.vue"
 
-const props = defineProps({ hidden: Boolean, hasGuess: Boolean, swapped: Boolean })
+const props = defineProps({ hidden: Boolean, held: Boolean, hasGuess: Boolean, swapped: Boolean })
 const emit = defineEmits(["guess", "swap"])
 const compact = useMedia("(hover: none), (max-width: 640px)")
 const swapTitle = computed(() => props.swapped ? "Swap back: photosphere full screen" : "Swap: map full screen")
@@ -14,7 +14,7 @@ function guess() {
 </script>
 
 <template>
-  <div class="guess halo" :class="{ hidden, swapped }">
+  <div class="guess halo" :class="{ hidden, swapped, 'out-of-view': held }">
     <div class="map">
       <slot />
       <div id="sphere-box" class="sphere-box"></div>
@@ -41,7 +41,12 @@ function guess() {
   flex-direction: column;
   gap: var(--gap);
   width: 320px;
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.5s;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.5s, opacity 0.3s ease 0s;
+}
+
+.guess.out-of-view {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .guess::after {

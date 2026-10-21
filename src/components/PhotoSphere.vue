@@ -3,18 +3,52 @@ import { onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { createSphere } from "../lib/sphere.js"
 
 const props = defineProps({ active: Boolean, boxed: Boolean, faded: Boolean })
-const emit = defineEmits(["heading"])
+const emit = defineEmits(["heading", "hold"])
 const canvas = ref(null)
+const HOLD_MS = 1000
+const pressed = new Set()
 let sphere = null
+let holdTimer = null
+
+function press(event) {
+  pressed.add(event.pointerId)
+  if (pressed.size === 1) {
+    holdTimer = setTimeout(() => emit("hold", true), HOLD_MS)
+  }
+}
+
+function release(event) {
+  if (!pressed.delete(event.pointerId) || pressed.size) {
+    return
+  }
+  clearTimeout(holdTimer)
+  emit("hold", false)
+}
+
+function releaseAll() {
+  pressed.clear()
+  clearTimeout(holdTimer)
+  emit("hold", false)
+}
 
 onMounted(() => {
   sphere = createSphere(canvas.value, { onHeading: heading => emit("heading", heading) })
   sphere.setActive(props.active)
+  canvas.value.addEventListener("pointerdown", press)
+  addEventListener("pointerup", release)
+  addEventListener("pointercancel", release)
+  addEventListener("blur", releaseAll)
 })
 
 watch(() => props.active, active => sphere?.setActive(active))
 
-onBeforeUnmount(() => sphere?.destroy())
+onBeforeUnmount(() => {
+  sphere?.destroy()
+  clearTimeout(holdTimer)
+  removeEventListener("pointerup", release)
+  removeEventListener("pointercancel", release)
+  removeEventListener("blur", releaseAll)
+})
 
 defineExpose({
   decode: (url, onProgress) => sphere.decode(url, onProgress),
