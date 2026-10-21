@@ -1535,7 +1535,7 @@ onBeforeUnmount(() => {
       <button class="secondary" type="button" @click="leaveView">{{ atlas ? "Back to the map" : "Back to results" }}</button>
     </div>
   </Transition>
-  <div ref="menuMark" class="menu-mark" :class="{ shown: markShown, stacked: isRound && phone }" :style="{ translate: homeShown && markPush ? `0 ${markPush}px` : null }">
+  <div ref="menuMark" class="menu-mark" :class="{ shown: markShown, stacked: isRound && phone, over: isRound }" :style="{ translate: homeShown && markPush ? `0 ${markPush}px` : null }">
     <a class="mark" :href="homeShown ? null : '/'" :title="homeShown ? null : 'Main menu'" @click.exact="markClick"><i class="mark-emblem"></i><span class="mark-text">Horizon Wayfinder</span></a>
   </div>
   <SlideBackdrop ref="backdrop" :active="((isMenu && !atlas) || intro) && !restoring && !booting" :timer="isMenu && !atlas && !restoring && !booting" :caption="!choosing" :dock="homeShown" />

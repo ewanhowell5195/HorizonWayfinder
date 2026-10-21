@@ -110,10 +110,14 @@ onBeforeUnmount(() => {
   height: 17px;
 }
 
+.stat {
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
+}
+
 .stat span {
   display: block;
   font-size: 11px;
-  color: var(--muted);
+  color: #b9bec3;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
