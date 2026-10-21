@@ -1505,7 +1505,7 @@ onBeforeUnmount(() => {
     <PhotoSphere ref="sphere" :active="sphereActive" :boxed="swapView" :faded="swapFading" @heading="setHeading" />
   </Teleport>
   <div id="map-full" class="map-full" :class="{ shown: swapView }"></div>
-  <GameHud :time="timeLeft" :round="status.index" :count="status.count" :score="status.total" :heading="heading" :hidden="!isRound" :mode="gameMode" :compass="gameRules.compass" :swapped="swapView" :faded="swapFading" />
+  <GameHud :time="timeLeft" :round="status.index" :count="status.count" :score="status.total" :heading="heading" :hidden="!isRound" :viewing="Boolean(viewing && !viewing.loading)" :mode="gameMode" :compass="gameRules.compass" :swapped="swapView" :faded="swapFading" />
   <GuessPanel :hidden="!isRound" :has-guess="hasGuess" :swapped="swapView" @guess="submitGuess" @swap="toggleSwap">
     <Teleport to="#map-full" defer :disabled="!swapView">
       <MapView ref="minimap" pickable pois scale modes :faded="swapFading" @pick="placeGuess" />

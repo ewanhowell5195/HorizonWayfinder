@@ -3,7 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { MODE_NAMES } from "../lib/rules.js"
 import HudCompass from "./HudCompass.vue"
 
-const props = defineProps({ round: Number, count: Number, score: Number, heading: Number, hidden: Boolean, mode: String, compass: Boolean, swapped: Boolean, faded: Boolean, time: { type: Number, default: null } })
+const props = defineProps({ round: Number, count: Number, score: Number, heading: Number, hidden: Boolean, viewing: Boolean, mode: String, compass: Boolean, swapped: Boolean, faded: Boolean, time: { type: Number, default: null } })
 
 const LOW_SECONDS = 10
 const emblem = computed(() => `/rounds/${(props.round - 1) % 5 + 1}.webp`)
@@ -37,6 +37,8 @@ function placeTimer() {
   timerTop.value = compass ? compass.getBoundingClientRect().bottom + TIMER_GAP : null
 }
 
+const showsCompass = computed(() => props.compass || props.viewing)
+
 watch(() => [props.compass, props.swapped], () => nextTick(placeTimer))
 
 onMounted(() => {
@@ -54,7 +56,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="hud" :class="{ hidden }">
+  <div class="hud" :class="{ hidden: hidden && !viewing, 'compass-only': viewing }">
     <div ref="stats" class="stats">
       <img class="emblem" :src="emblem" alt="">
       <div class="stat"><span>Round</span><strong>{{ round }} / {{ count }}</strong></div>
@@ -62,7 +64,7 @@ onBeforeUnmount(() => {
       <div v-if="mode !== 'normal'" class="stat"><span>Mode</span><strong class="mode">{{ MODE_NAMES[mode] }}</strong></div>
     </div>
     <Teleport to="#sphere-box" defer :disabled="!swapped">
-      <HudCompass v-if="compass" ref="compassView" :heading="heading" :boxed="swapped" :faded="faded" :placement="placement" />
+      <HudCompass v-if="showsCompass" ref="compassView" :heading="heading" :boxed="swapped" :faded="faded" :placement="placement" />
     </Teleport>
     <div v-if="time !== null" class="round-timer caps" :class="[timerSpot, { low: time <= LOW_SECONDS }]" :style="timerTop !== null ? { top: `${timerTop}px` } : null" role="timer" aria-label="Time left"><span :key="time">{{ clock }}</span></div>
   </div>
@@ -91,6 +93,10 @@ onBeforeUnmount(() => {
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+}
+
+.hud.compass-only .stats, .hud.compass-only .round-timer {
+  visibility: hidden;
 }
 
 .stats {
