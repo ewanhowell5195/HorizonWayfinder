@@ -917,6 +917,10 @@ a.mark[href]:hover {
   color: #fff;
 }
 
+.compass-bar span.diagonal {
+  font-size: calc(12.5 * var(--u));
+}
+
 .compass-shadow, .compass-line {
   position: absolute;
   top: calc(-7 * var(--u));
