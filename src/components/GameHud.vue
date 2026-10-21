@@ -86,7 +86,7 @@ onBeforeUnmount(() => {
   left: 0;
   right: 0;
   height: calc(var(--header-top) * 2 + 60px);
-  background: linear-gradient(rgba(7, 9, 12, 0.6), rgba(7, 9, 12, 0));
+  background: linear-gradient(rgba(7, 9, 12, 0.6) 0%, rgba(7, 9, 12, 0.443) 19%, rgba(7, 9, 12, 0.325) 34%, rgba(7, 9, 12, 0.229) 47%, rgba(7, 9, 12, 0.167) 56.5%, rgba(7, 9, 12, 0.116) 65%, rgba(7, 9, 12, 0.076) 73%, rgba(7, 9, 12, 0.045) 80.2%, rgba(7, 9, 12, 0.025) 86.1%, rgba(7, 9, 12, 0.013) 91%, rgba(7, 9, 12, 0.005) 95.2%, rgba(7, 9, 12, 0.001) 98.2%, rgba(7, 9, 12, 0) 100%);
 }
 
 .hud.hidden {

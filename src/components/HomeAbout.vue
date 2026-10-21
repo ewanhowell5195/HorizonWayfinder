@@ -110,7 +110,7 @@ const SHOTS = [
   margin: 0 -56px -34px;
   --fade-length: clamp(96px, 16vh, 180px);
   padding: calc(var(--fade-length) + clamp(64px, 10vh, 120px)) 56px 0;
-  background: linear-gradient(rgba(7, 9, 12, 0.000) calc(var(--fade-length) * 0.000), rgba(7, 9, 12, 0.020) calc(var(--fade-length) * 0.083), rgba(7, 9, 12, 0.074) calc(var(--fade-length) * 0.167), rgba(7, 9, 12, 0.156) calc(var(--fade-length) * 0.250), rgba(7, 9, 12, 0.259) calc(var(--fade-length) * 0.333), rgba(7, 9, 12, 0.376) calc(var(--fade-length) * 0.417), rgba(7, 9, 12, 0.500) calc(var(--fade-length) * 0.500), rgba(7, 9, 12, 0.624) calc(var(--fade-length) * 0.583), rgba(7, 9, 12, 0.741) calc(var(--fade-length) * 0.667), rgba(7, 9, 12, 0.844) calc(var(--fade-length) * 0.750), rgba(7, 9, 12, 0.926) calc(var(--fade-length) * 0.833), rgba(7, 9, 12, 0.980) calc(var(--fade-length) * 0.917), rgba(7, 9, 12, 1.000) calc(var(--fade-length) * 1.000));
+  background: linear-gradient(rgba(7, 9, 12, 0) 0px, rgba(7, 9, 12, 0.001) calc(var(--fade-length) * 0.009), rgba(7, 9, 12, 0.004) calc(var(--fade-length) * 0.024), rgba(7, 9, 12, 0.011) calc(var(--fade-length) * 0.045), rgba(7, 9, 12, 0.021) calc(var(--fade-length) * 0.07), rgba(7, 9, 12, 0.037) calc(var(--fade-length) * 0.099), rgba(7, 9, 12, 0.063) calc(var(--fade-length) * 0.135), rgba(7, 9, 12, 0.097) calc(var(--fade-length) * 0.175), rgba(7, 9, 12, 0.139) calc(var(--fade-length) * 0.218), rgba(7, 9, 12, 0.191) calc(var(--fade-length) * 0.265), rgba(7, 9, 12, 0.271) calc(var(--fade-length) * 0.33), rgba(7, 9, 12, 0.369) calc(var(--fade-length) * 0.405), rgba(7, 9, 12, 0.5) calc(var(--fade-length) * 0.5), rgba(7, 9, 12, 0.631) calc(var(--fade-length) * 0.595), rgba(7, 9, 12, 0.73) calc(var(--fade-length) * 0.67), rgba(7, 9, 12, 0.809) calc(var(--fade-length) * 0.735), rgba(7, 9, 12, 0.861) calc(var(--fade-length) * 0.782), rgba(7, 9, 12, 0.903) calc(var(--fade-length) * 0.825), rgba(7, 9, 12, 0.937) calc(var(--fade-length) * 0.865), rgba(7, 9, 12, 0.963) calc(var(--fade-length) * 0.901), rgba(7, 9, 12, 0.979) calc(var(--fade-length) * 0.93), rgba(7, 9, 12, 0.99) calc(var(--fade-length) * 0.955), rgba(7, 9, 12, 0.996) calc(var(--fade-length) * 0.976), rgba(7, 9, 12, 0.999) calc(var(--fade-length) * 0.991), rgba(7, 9, 12, 1) var(--fade-length));
 }
 
 .intro, .shot, .points, .made, .site-footer {
@@ -205,7 +205,7 @@ h3 {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to right, rgba(7, 9, 12, 0.8), rgba(7, 9, 12, 0) 62%);
+  background: linear-gradient(to right, rgba(7, 9, 12, 0.8) 0%, rgba(7, 9, 12, 0.59) 11.8%, rgba(7, 9, 12, 0.433) 21.1%, rgba(7, 9, 12, 0.306) 29.1%, rgba(7, 9, 12, 0.222) 35%, rgba(7, 9, 12, 0.155) 40.3%, rgba(7, 9, 12, 0.101) 45.3%, rgba(7, 9, 12, 0.06) 49.7%, rgba(7, 9, 12, 0.034) 53.4%, rgba(7, 9, 12, 0.017) 56.4%, rgba(7, 9, 12, 0.006) 59%, rgba(7, 9, 12, 0.002) 60.9%, rgba(7, 9, 12, 0) 62%);
 }
 
 .vista-content {

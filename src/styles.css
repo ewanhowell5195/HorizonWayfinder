@@ -425,7 +425,7 @@ a.mark[href]:hover {
 }
 
 .screen.faded {
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, calc(1 - var(--fade, 0))) 56px, #000 96px);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, calc(1 - var(--fade, 0))) 56px, rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.738)) 63.6px, rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.541)) 69.6px, rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.382)) 74.8px, rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.278)) 78.6px, rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.194)) 82px, rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.126)) 85.2px, rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.075)) 88.1px, rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.042)) 90.4px, rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.021)) 92.4px, rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.008)) 94.1px, rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.002)) 95.3px, #000 96px);
 }
 
 .screen.scrolls {
@@ -445,7 +445,7 @@ a.mark[href]:hover {
 }
 
 .screen.scrolls.faded > .screen-fold {
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, calc(1 - var(--fade, 0))) calc(var(--scrolled, 0px) + 56px - var(--screen-top)), #000 calc(var(--scrolled, 0px) + 96px - var(--screen-top)));
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, calc(1 - var(--fade, 0))) calc(var(--scrolled, 0px) + 56px - var(--screen-top)), rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.738)) calc(var(--scrolled, 0px) + 63.6px - var(--screen-top)), rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.541)) calc(var(--scrolled, 0px) + 69.6px - var(--screen-top)), rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.382)) calc(var(--scrolled, 0px) + 74.8px - var(--screen-top)), rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.278)) calc(var(--scrolled, 0px) + 78.6px - var(--screen-top)), rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.194)) calc(var(--scrolled, 0px) + 82px - var(--screen-top)), rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.126)) calc(var(--scrolled, 0px) + 85.2px - var(--screen-top)), rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.075)) calc(var(--scrolled, 0px) + 88.1px - var(--screen-top)), rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.042)) calc(var(--scrolled, 0px) + 90.4px - var(--screen-top)), rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.021)) calc(var(--scrolled, 0px) + 92.4px - var(--screen-top)), rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.008)) calc(var(--scrolled, 0px) + 94.1px - var(--screen-top)), rgba(0, 0, 0, calc(1 - var(--fade, 0) * 0.002)) calc(var(--scrolled, 0px) + 95.3px - var(--screen-top)), #000 calc(var(--scrolled, 0px) + 96px - var(--screen-top)));
 }
 
 .screen.visible {

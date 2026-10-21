@@ -291,7 +291,7 @@ defineExpose({ room })
   inset: calc(var(--w) * -0.07) calc(-1 * var(--panel-pad)) calc(var(--w) * -0.04);
   z-index: -1;
   overflow: hidden;
-  mask: radial-gradient(ellipse 55% 75% at 50% 48%, #000 35%, transparent 100%);
+  mask: radial-gradient(ellipse 55% 75% at 50% 48%, #000 35%, rgba(0, 0, 0, 0.738) 47.4%, rgba(0, 0, 0, 0.541) 57.1%, rgba(0, 0, 0, 0.382) 65.5%, rgba(0, 0, 0, 0.278) 71.7%, rgba(0, 0, 0, 0.194) 77.3%, rgba(0, 0, 0, 0.126) 82.4%, rgba(0, 0, 0, 0.075) 87.1%, rgba(0, 0, 0, 0.042) 91%, rgba(0, 0, 0, 0.021) 94.2%, rgba(0, 0, 0, 0.008) 96.9%, rgba(0, 0, 0, 0.002) 98.8%, transparent 100%);
   opacity: calc(var(--glow) * 1.8);
   pointer-events: none;
 }
